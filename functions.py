@@ -241,6 +241,19 @@ def load_glf(name):
         
     return textures
 
+
+def img2texture(data,size):
+    
+    
+    texture_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture_id)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size[0], size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
+    
+    return texture_id
+
+
 def update_thread(update_list,running):# thread
     t=time.time()
     while running[0]:

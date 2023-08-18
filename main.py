@@ -18,6 +18,8 @@ from camera import Camera
 from cake import Cake
 from kaka import KaKa
 from firework import Firework_generator
+from schedule import Table
+from favourite_img import Favourite_Img
 
 
 
@@ -40,7 +42,7 @@ def anniversary_days(anniversary:str):
 
 def getAge():  # return age,whether birthday
     birthday_flag = False
-    birthday = datetime.datetime(2005, 8, 30)
+    birthday = datetime.datetime(2005, 8, 20)
     year_b, month_b, day_b = birthday.year, birthday.month, birthday.day
     today = datetime.datetime.now()
     year_n, month_n, day_n = today.year, today.month, today.day
@@ -56,6 +58,7 @@ def initinal_imgs():
     age, birth_flag = getAge()
     sun = Sun((10.0, 100.0, -80.0, 1), 10)
     name = Font((0, 0, 0), "name", (1, 1, 1), (98, 0, 98))
+    
     if birth_flag:
         happy = Font((0, 17, 0), "H", (1, 1, 1), (153, 130, 108))
         birthday = Font((0, 10, 0), "B", (1, 1, 1), (153, 130, 108))
@@ -66,7 +69,9 @@ def initinal_imgs():
             (10, 0, 0), "love", (4, 4, 4), (255, 10, 10), (0.9, 0.1, 0.1), (0, 0, 0)
         )
         texts=anniversary_days(str(getAnniversary()))
-        arr = [sun, name, love]+texts
+        table=Table((-25,0,-7),40)
+        img=Favourite_Img((19,0,-7),320)
+        arr = [sun, name, love,table,img]+texts
     str_age = str(age)
     for i in range(len(str_age)):
         arr.append(
@@ -106,7 +111,7 @@ def main():
     age,birth_flag=getAge()
     img_list, cake = initinal_imgs()
 
-    initinal_cam_pos = np.array([0, 0, -20])
+    initinal_cam_pos = np.array([0, 0, -50])
     camera = Camera(initinal_cam_pos)
     firework=Firework_generator(running,age,birth_flag)
     kaka = KaKa(10, 15, (0, -10, 20), cake,firework)
