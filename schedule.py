@@ -2,9 +2,11 @@ from openpyxl import load_workbook
 from PIL import Image, ImageDraw, ImageFont
 import os
 from datetime import datetime, timedelta
+import threading
 
 from functions import *
 from rotate import *
+from whether import Weather_Reporter
 
 
 
@@ -151,7 +153,7 @@ class Table:
 
     def high_light(self):
         #print(self.times_text)
-        day_index={"Monday":0,"Tuseday":1,"Wednesday":2,"Thursday":3,"Friday":4,"Saturday":5,"Sunday":6}
+        day_index={"Monday":0,"Tuesday":1,"Wednesday":2,"Thursday":3,"Friday":4,"Saturday":5,"Sunday":6}
 
         today = datetime.today()
         day_of_week = today.strftime("%A")
@@ -174,7 +176,26 @@ class Table:
         self.four_points=np.array(self.four_points)
         self.four_points=Ry(self.rotate_angle)*self.four_points
         self.four_points=[self.four_points[:,i]+change_pos for i in range(4)]
+
+
+    def create_weather_table(self):
+        try:
+            self.reporter=Weather_Reporter()
+            thread=threading.Thread(target=self.reporter.get_answer_from_chatgpt)
+            thread.start()
+
+        except:
+            print("Network Error")
         
+    def check_weather_create(self):
+        if self.reporter.answer!="":
+            pass
+
+
+
+            self.reporter.answer=""
+
+            
 
 
     def display(self):
@@ -210,7 +231,7 @@ class Table:
 
     
 
-        
+
 
 
 

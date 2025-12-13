@@ -81,6 +81,8 @@ def handle_event(event,camera,kaka,firework,running):
                 firework.get_random_position(),
                 firework.get_random_velocity()
                 )
+        elif event.key==pygame.K_n:
+            firework.start_auto_fire_new_year_eve()
     elif event.type == pygame.KEYUP:  # 键盘按下事件
         if event.key in camera.move_flag_dict:
             camera.move_flag=0

@@ -115,11 +115,18 @@ class Firework_generator():#it is used to create firework, like a rocket launche
         
         #self.firework_ready=[]
     def start_auto_fire(self):
+        self.auto=Auto_fire(self.auto_para[1],self,self.auto_para[2])
         if self.auto_para[0]:
             
-            auto=Auto_fire(self.auto_para[1],self,self.auto_para[2])
-            auto.start_auto_fire()
+            
+            self.auto.start_auto_fire()
             self.auto_para[0]=False
+
+    def start_auto_fire_new_year_eve(self):
+          
+        self.auto=Auto_fire(self.auto_para[1],self,self.auto_para[2])
+        self.auto.start_auto_fire_new_year_eve()
+        
 
     def setMusic(self):
         # store the path of files
@@ -136,7 +143,7 @@ class Firework_generator():#it is used to create firework, like a rocket launche
     def getMusic(self,musics):# get music randomly
         return musics[random.randint(0,len(musics)-1)]
     
-    def generate_firework(self,position,velocity,types=0):
+    def generate_firework(self,position,velocity,types=0,color=(-1,-1,-1)):
         if types==0:
             types=self.firework_type.choose_random_type()# set firework type used
         
@@ -144,7 +151,7 @@ class Firework_generator():#it is used to create firework, like a rocket launche
             frame_fire(
             position,# position of particle
             velocity,# velocity of particle
-            COLOR[random.randint(0,len(COLOR)-1)],# color of particle
+            COLOR[random.randint(0,len(COLOR)-1)] if color==(-1,-1,-1) else color,# color of particle
             True,# whether particle need tail effect
             self.getMusic(self.burst_sounds),# music used
             types,# the type of firework
@@ -152,15 +159,16 @@ class Firework_generator():#it is used to create firework, like a rocket launche
             self.effect_position_np# the pointer of big array
             )
         )
+        
         music=self.getMusic(self.lift_sounds)
         music.set_volume(0.5)
         music.play()# play music when send firework
     
-    def generate_firework_thread(self,position,velocity,types=0):# used in threading in order to match the main thread
+    def generate_firework_thread(self,position,velocity,types=0,color=(-1,-1,-1)):# used in threading in order to match the main thread
         if types==0:
             types=self.firework_type.choose_random_type()
 
-        self.thread_cache.append((position,velocity,types))
+        self.thread_cache.append((position,velocity,types,color))
     
     def check_thread(self):# like wise
         for para in list(self.thread_cache):
@@ -457,7 +465,11 @@ class frame_fire(Particle):
             
             Firework.particles+= self.fire_type(self)
             self.music.set_volume(0.5)
-            self.music.play()
+            
+            
+            if Firework.auto.type_firework.nothing!=self.fire_type:
+                
+                self.music.play()
             
             
 
@@ -576,6 +588,17 @@ class Firework_types(Object):
         self.h_b=pygame.surfarray.array2d(
             self.font.render("Happy Birthday", True, (255, 255, 255),(0,0,0))
             ).T
+        self.new_year=pygame.surfarray.array2d(
+            self.font.render("Happy New Year!", True, (255, 255, 255),(0,0,0))
+            ).T
+        
+        self.love_you=pygame.surfarray.array2d(
+            self.font.render("Love You", True, (255, 255, 255),(0,0,0))
+            ).T
+        self.forever=pygame.surfarray.array2d(
+            self.font.render("Forever!", True, (255, 255, 255),(0,0,0))
+            ).T
+
 
     def choose_random_type(self):
         percentage=random.randint(0,100)
@@ -587,7 +610,7 @@ class Firework_types(Object):
             types=self.types_level1
 
         return types[random.randint(0,len(types)-1)]
-        #return self.extrimely_big_fire_2
+        #return self.extrimely_big_fire_1
     
     def find_matched_color(self,color_self):
         matched=[]
@@ -638,8 +661,10 @@ class Firework_types(Object):
         particles=[]
         for position in final_positions:
             velocity=self.get_vel_by_pos(np.zeros((3,1)),position.reshape(3, 1),time_reach)
-            particles.append(frame_break(position_org,velocity,color,False,fire_type=self.nothing,
-                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+            particle=frame_break(position_org,velocity,color,False,fire_type=self.nothing,
+                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np)
+            particle.set_change_size(random.uniform(0.001,0.0015))
+            particles.append(particle)
         return particles
 
     def random_color(self,frame,radius=3,num_particles=0,tail=True):
@@ -692,9 +717,10 @@ class Firework_types(Object):
         for i in range(num_particles):
             
             velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x[i],y[i],z[i])),time_reach)
-            
-            particles.append(frame_break(position_org,velocity,color,tail,fire_type=self.nothing,
-                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+            particle=frame_break(position_org,velocity,color,tail,fire_type=self.nothing,
+                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np)
+            particle.set_change_size(random.uniform(0.001,0.0015))
+            particles.append(particle)
         return particles
     
     def double_ball(self,frame):
@@ -833,8 +859,12 @@ class Firework_types(Object):
                                          particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
 
             velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((rotated_top[0,i],rotated_top[1,i],rotated_top[2,i])),0.3)
-            particles.append(frame_break(position_org,velocity,matched_color,False,fire_type=self.nothing,
-                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+            particle=frame_break(position_org,velocity,matched_color,False,fire_type=self.nothing,
+                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np)
+            particle.set_change_size(random.uniform(0.001,0.0015))
+            
+            particles.append(particle)
+            
         return particles
 
     def mixed_color_ball(self,frame):
@@ -1081,12 +1111,15 @@ class Auto_fire:
         else:
             types=self.types_level1
 
-        return types[random.randint(0,len(types)-1)]
-        #return self.extrimely_big_fire_2
+        #return types[random.randint(0,len(types)-1)]
+        return self.extrimely_big_fire_1
     def start_auto_fire(self):# threading
         thread=threading.Thread(target=self.generete_fire_auto,args=())
         thread.start()
 
+    def start_auto_fire_new_year_eve(self):
+        thread=threading.Thread(target=self.happy_new_year,args=())
+        thread.start()
 
     def generete_fire_auto(self):
         self.fan()
@@ -1256,3 +1289,189 @@ class Auto_fire:
         time.sleep(0.4)
         music.play()
         time.sleep(5)
+
+    def nothing_queue(self,color):
+        vel_left=np.array([
+                [20],
+                [20],
+                [0]
+            ])
+        interval=2
+        for i in range(10):
+                vel_left=Rz(90/10)*vel_left
+                
+                self.firework_generator.generate_firework_thread((5*interval-interval*i,0,0),(vel_left[0,0],vel_left[1,0],vel_left[2,0]),self.type_firework.nothing,color)
+        vel_left_2=np.array([
+                [15],
+                [15],
+                [15]
+            ])
+        for ii in range(10):
+            vel_left_2=Rz(90/10)*vel_left_2
+            
+            self.firework_generator.generate_firework_thread((5*interval-interval*ii,0,0),(vel_left_2[0,0],vel_left_2[1,0],vel_left_2[2,0]),self.type_firework.nothing,color)
+
+    def ball_queue(self,color):
+        interval=2
+        for i in range(30):
+            
+            
+            self.firework_generator.generate_firework_thread((random.randint(12,18)*interval-interval*i,0,0),(0,random.randint(28,32),0),self.type_firework.ball,color)
+
+    def interval_firework(self):
+        for i in range(10):
+            self.firework_generator.generate_firework_thread((random.randint(-10,10),0,0),(0,random.randint(15,20),0),self.type_firework.ball_up,(245,194,84))
+
+    def upper_firework(self,color,type):
+        for i in range(10):
+            self.firework_generator.generate_firework_thread((random.randint(-20,20),0,0),(0,random.randint(25,33),0),type,color)
+
+    def lower_firework_1(self):
+        for i in range(250):
+            self.firework_generator.generate_firework_thread((random.randint(-5,5),0,0),(0,random.randint(5,10),0),self.type_firework.random_color,(255,255,255))
+            time.sleep(0.05)
+
+    def lower_firework_2(self,color,displacement=0):
+        vel_left=np.array([
+                [10],
+                [10],
+                [0]
+            ])
+        interval=2
+        for i in range(10):
+                vel_left=Rz(90/10)*vel_left
+                
+                self.firework_generator.generate_firework_thread(((5*interval-interval*i)+displacement,0,0),(vel_left[0,0],vel_left[1,0],vel_left[2,0]),self.type_firework.nothing,color)
+
+    def large_range(self,type,color):
+        for i in range(10):
+            self.firework_generator.generate_firework_thread((random.randint(-10,10),0,0),(0,random.randint(15,33),0),type,color)
+
+    def firework_final_1(self,type):
+        color=COLOR[random.randint(0,len(COLOR)-1)]
+        for total in range(10):
+            for each in range(3):
+                self.firework_generator.generate_firework_thread((random.randint(-30,30),0,0),(0,random.randint(28,32),0),type,color)
+                time.sleep(0.05)
+    def firework_final_2(self):
+        for i in range(300):
+            color=COLOR[random.randint(0,len(COLOR)-1)]
+            self.lower_firework_2(color,random.randint(-5,5))
+            time.sleep(0.05)
+    def firework_final_3(self):
+        for total in range(80):
+            for each in range(2):
+                color=COLOR[random.randint(0,len(COLOR)-1)]
+                self.firework_generator.generate_firework_thread((random.randint(-30,30),0,0),(0,random.randint(18,22),0),self.type_firework.ball_up,color)
+                time.sleep(0.05)
+    
+
+        
+    def starter(self):
+        self.nothing_queue((255,255,255))
+        self.ball_queue((255,0,255))
+
+        time.sleep(5)
+
+        self.nothing_queue((245,194,84))
+        self.ball_queue((205,45,65))
+
+        time.sleep(5)
+
+        self.nothing_queue((255,255,255))
+        self.ball_queue((60,122,240))
+
+        time.sleep(5)
+
+        self.nothing_queue((245,194,84))
+        self.ball_queue((217,217,217))
+
+        time.sleep(5)
+
+        self.nothing_queue((255,255,255))
+        self.ball_queue((171,37,200))
+
+    def main_fire_1(self):
+        thread=threading.Thread(target=self.lower_firework_1,args=())
+        thread.start()
+
+        main_list=[self.type_firework.planet_ball,self.type_firework.mixed_color_ball,self.type_firework.double_ball,self.type_firework.flower]
+        for typ in main_list:
+            self.upper_firework(COLOR[random.randint(0,len(COLOR)-1)],typ)
+            time.sleep(0.5)
+            self.interval_firework()
+            time.sleep(4)
+
+    def main_fire_2(self):
+        main_list=[self.type_firework.planet_ball,self.type_firework.mixed_color_ball,self.type_firework.double_ball]
+
+        for i in main_list:
+            color=COLOR[random.randint(0,len(COLOR)-1)]
+            self.large_range(i,color)
+            
+            self.lower_firework_2(color,1)
+            time.sleep(0.3)
+            self.lower_firework_2(color,-1)
+            time.sleep(0.3)
+            self.lower_firework_2(color,1)
+            time.sleep(0.3)
+            self.lower_firework_2(color,-1)
+            time.sleep(3)
+
+    def final_word(self):
+        #time.sleep(3)
+        kaka=generate_func_type(self.type_firework.happy_birthday,self.type_firework.kaka)
+        NYE=generate_func_type(self.type_firework.happy_birthday,self.type_firework.new_year)
+        LU=generate_func_type(self.type_firework.happy_birthday,self.type_firework.love_you)
+        forever=generate_func_type(self.type_firework.happy_birthday,self.type_firework.forever)
+        self.firework_generator.generate_firework_thread((0,0,0),(0,30,0),kaka)
+        time.sleep(1)
+        self.firework_generator.generate_firework_thread((0,0,0),(0,30,0),NYE)
+        time.sleep(1)
+        self.firework_generator.generate_firework_thread((0,0,0),(0,30,0),LU)
+        time.sleep(1)
+        self.firework_generator.generate_firework_thread((0,0,0),(0,30,0),forever)
+        time.sleep(1)
+
+        
+
+    def final_fire(self):
+        thread=threading.Thread(target=self.final_word,args=())
+        thread.start()
+        thread=threading.Thread(target=self.firework_final_2,args=())
+        thread.start()
+        thread=threading.Thread(target=self.firework_final_3,args=())
+        thread.start()
+        main_list=[self.type_firework.planet_random_color,self.type_firework.half_half_color_ball,self.type_firework.double_ball,self.type_firework.love_2D_odd]
+        for i in main_list:
+            self.firework_final_1(i)
+            self.firework_final_1(i)
+
+    def happy_new_year(self):
+
+
+        
+        self.starter()
+        self.main_fire_2()
+
+        for i in range(2):
+            self.main_fire_1()
+        
+        self.final_fire()
+        time.sleep(2)
+
+        self.firework_generator.generate_firework_thread((0,0,0),(0,30,0),self.type_firework.extrimely_big_fire_1)
+        time.sleep(4.5)
+        music=self.firework_generator.getMusic(self.firework_generator.crackle_sounds)
+        music.set_volume(0.5)
+        music.play()
+        time.sleep(3)
+
+        self.firework_generator.generate_firework_thread((0,0,0),(0,30,0),self.type_firework.extrimely_big_fire_2)
+        time.sleep(3.5)
+        music=self.firework_generator.getMusic(self.firework_generator.crackle_sounds)
+        music.set_volume(0.8)
+        music.play()
+        time.sleep(0.4)
+        music.play()
+        
