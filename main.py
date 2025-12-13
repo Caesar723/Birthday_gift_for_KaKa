@@ -42,7 +42,7 @@ def anniversary_days(anniversary:str):
 
 def getAge():  # return age,whether birthday
     birthday_flag = False
-    birthday = datetime.datetime(2005, 12, 19)
+    birthday = datetime.datetime(2005, 8, 30)
     year_b, month_b, day_b = birthday.year, birthday.month, birthday.day
     today = datetime.datetime.now()
     year_n, month_n, day_n = today.year, today.month, today.day
@@ -105,6 +105,7 @@ def initinal_update_list(camera, cake,firework):
 
 def main():
     running = [True]
+    thread_cache=[]
     pygame.init()
     pygame.mixer.init()
     # 1400,800
@@ -151,7 +152,9 @@ def main():
                 
                 if event.type == pygame.QUIT:
                     running[0] = False
-                handle_event(event, camera, kaka,firework,running)
+                    # for thread in thread_cache:
+                    #     thread.stop()
+                handle_event(event, camera, kaka,firework,running,thread_cache)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glLoadIdentity()

@@ -5,7 +5,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>Gift_for_KaKa❤️</string>
 	<key>CFBundleExecutable</key>
-	<string>Gift_for_KaKa❤️</string>
+	<string>main</string>
 	<key>CFBundleIconFile</key>
 	<string>img.icns</string>
 	<key>CFBundleIdentifier</key>
