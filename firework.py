@@ -766,6 +766,33 @@ class Firework_types(Object):
             self.font.render("Forever!", True, (255, 255, 255),(0,0,0))
             ).T
 
+        self.font_chinese= pygame.font.Font(PATH.format("files/font.ttf"), 50)
+
+        text_segments = [
+            "祝纳纳节日快乐！",
+            "转眼三年过去了。",
+            "你还有半个学期就要毕业了。",
+            "会有不舍，也会有期待。",
+            "希望你在研究生阶段，",
+            "以及更远的未来，",
+            "都能越来越好。",
+            "也希望你能跨过重重困难。",
+            "心态慢慢变好，",
+            "慢慢阳光起来。",
+            "相信自己。",
+            "你是最棒的。",
+            "我会一直在。",
+            "永远爱你。"
+        ]
+
+        self.text_arrays = [
+            pygame.surfarray.array2d(
+                self.font_chinese.render(seg, True, (255, 255, 255), (0, 0, 0))
+            ).T
+            for seg in text_segments
+        ]
+
+
 
     def choose_random_type(self):
         percentage=random.randint(0,100)
@@ -1073,6 +1100,25 @@ class Firework_types(Object):
                                          particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
         return particles
 
+    def ball_down(self,frame,radius=3,color=0,num_particles=0):
+        if color==0:
+            color=frame.color
+        position_org=frame.indexed_position
+        if num_particles==0:
+            num_particles=50
+        displace=-2.5
+        theta = np.random.uniform(0, np.pi, num_particles)  # theta is randomly distributed between 0 and pi
+        phi = np.random.uniform(0, 2*np.pi, num_particles)  # phi is randomly distributed between 0 and 2*pi
+        x = radius*np.sin(theta) * np.cos(phi)
+        y = radius*np.sin(theta) * np.sin(phi)+displace
+        z = radius*np.cos(theta)
+
+        particles=[]
+        for i in range(num_particles):
+            velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x[i],y[i],z[i])),0.3)
+            particles.append(frame_break(position_org,velocity,color,True,fire_type=self.nothing,
+                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+        return particles
 
     def happy_birthday(self,frame,arr):
         
@@ -1093,6 +1139,28 @@ class Firework_types(Object):
                     ])
                     velocity=self.get_vel_by_pos(np.zeros((3,1)),pos,0.3)
                     particles.append(frame_break(position_org,velocity,(255,0,255),False,fire_type=self.nothing,
+                                                 particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+        return particles
+
+    def text_display(self,frame,arr):
+        
+        start_pos=[-int(len(arr)/2),-int(len(arr[0])/2)]#y,x
+
+        position_org=frame.indexed_position
+        scale=0.04
+
+        particles=[]
+        for y in range(start_pos[0],-start_pos[0]):
+            for x in range(start_pos[1],-start_pos[1]):
+                if arr[y-start_pos[0],x-start_pos[1]] and random.randint(0,1):
+                    x_final,y_final=-x*scale,-y*scale
+                    pos=np.array([
+                        [x_final],
+                        [y_final],
+                        [-5]
+                    ])
+                    velocity=self.get_vel_by_pos(np.zeros((3,1)),pos,0.3)
+                    particles.append(frame_break(position_org,velocity,(200,200,200),False,fire_type=self.nothing,
                                                  particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
         return particles
 
@@ -1204,10 +1272,190 @@ class Firework_types(Object):
 
 
         return total_particles
+
+    def extrimely_big_fire_3(self, frame):
+        """
+        超级壮观的8尺玉烟花 - 多层次爆炸、华丽光效
+        设计理念：7层同心球体 + 4个彩色光环 + 二次爆炸 + 星芒效果
+        """
+        color = frame.color
+        matched_color = self.find_matched_color(color)
+        
+        # ============ 第一阶段：主体球形爆炸（7层同心球，从外到内） ============
+        # 最外层 - 巨大的金色外壳，带拖尾
+        particle_outer = self.ball(frame, 65, (255, 215, 0), 800, time_reach=1.2, tail=True)
+        
+        # 第二层 - 主色大球
+        particle_main = self.ball(frame, 55, color, 700, time_reach=1.1)
+        
+        # 第三层 - 随机彩色中球，带拖尾（形成流星效果）
+        particle_meteor = self.ball(frame, 45, COLOR[random.randint(0, len(COLOR)-1)], 200, time_reach=1.0, tail=True)
+        
+        # 第四层 - 配色球
+        particle_matched = self.ball(frame, 38, matched_color, 500, time_reach=0.9)
+        
+        # 第五层 - 银白色内球
+        particle_silver = self.ball(frame, 30, (220, 220, 255), 400, time_reach=0.8)
+        
+        # 第六层 - 随机彩色小球，会二次爆炸
+        particle_burst = self.ball(frame, 22, COLOR[random.randint(0, len(COLOR)-1)], 150, time_reach=0.7, tail=True)
+        
+        # 最内层 - 核心爆炸，超亮白色
+        particle_core = self.ball(frame, 12, (255, 255, 255), 100, time_reach=0.5)
+        
+        # ============ 第二阶段：多层光环（4个不同角度的光环） ============
+        ring_color_1 = COLOR[random.randint(0, len(COLOR)-1)]
+        ring_color_2 = COLOR[random.randint(0, len(COLOR)-1)]
+        ring_color_3 = COLOR[random.randint(0, len(COLOR)-1)]
+        ring_color_4 = (255, 200, 100)  # 金色光环
+        
+        particle_ring_1 = self.circle(frame, 70, ring_color_1, num_frame=120, time_reach=1.2)
+        particle_ring_2 = self.circle(frame, 60, ring_color_2, num_frame=100, time_reach=1.1)
+        particle_ring_3 = self.circle(frame, 50, ring_color_3, num_frame=80, time_reach=1.0)
+        particle_ring_4 = self.circle(frame, 40, ring_color_4, num_frame=60, time_reach=0.9)
+        
+        # ============ 第三阶段：随机彩色星芒 ============
+        particle_stars = self.random_color(frame, 20, 120, tail=True)
+        
+        # ============ 合并所有粒子 ============
+        total_particles = (particle_outer + particle_main + particle_meteor + 
+                          particle_matched + particle_silver + particle_burst + particle_core +
+                          particle_ring_1 + particle_ring_2 + particle_ring_3 + particle_ring_4 +
+                          particle_stars)
+        
+        # ============ 设置粒子属性 ============
+        # 外层粒子慢慢消失
+        for particle in particle_outer:
+            particle.set_change_size(random.uniform(0.0003, 0.0005))
+            particle.fire_type = self.nothing
+            
+        # 主体粒子
+        for particle in particle_main + particle_matched + particle_silver:
+            particle.set_change_size(random.uniform(0.0004, 0.0006))
+        
+        # 流星粒子 - 二次爆炸成随机颜色
+        for particle in particle_meteor:
+            particle.set_change_size(random.uniform(0.0006, 0.0008))
+            particle.fire_type = self.random_color
+            
+        # 爆裂粒子 - 二次爆炸成小球
+        for particle in particle_burst:
+            particle.set_change_size(random.uniform(0.0008, 0.0012))
+            particle.fire_type = self.ball
+            
+        # 核心粒子 - 快速消失，但会二次爆炸
+        for particle in particle_core:
+            particle.set_change_size(random.uniform(0.0015, 0.002))
+            particle.fire_type = self.random_color
+            
+        # 光环粒子
+        for particle in particle_ring_1 + particle_ring_2 + particle_ring_3 + particle_ring_4:
+            particle.set_change_size(random.uniform(0.0005, 0.0008))
+            
+        # 星芒粒子 - 长拖尾，二次爆炸
+        for particle in particle_stars:
+            particle.set_change_size(random.uniform(0.001, 0.0015))
+            particle.fire_type = self.ball
+        
+        return total_particles
+
+    def extrimely_big_fire_4(self, frame):
+        """
+        「千重菊」- 日式冠菊烟花
+        设计理念：模仿真实的日本尺玉菊花烟花
+        - 纯净的银白核心，缓缓绽放
+        - 金色长芒向外延伸，末端带有柳叶下垂效果
+        - 没有杂乱的颜色，只有金与银的优雅对话
+        - 每一颗芒星都会在末端绽放成小花
+        """
+        position_org = frame.indexed_position
+        
+        # ============ 色彩定义 - 简约而不简单 ============
+        pure_gold = (255, 200, 80)      # 纯金色
+        warm_gold = (255, 180, 60)      # 暖金色
+        pale_gold = (255, 220, 150)     # 淡金色
+        silver_white = (240, 245, 255)  # 银白色
+        soft_white = (255, 250, 245)    # 柔白色
+        
+        # ============ 第一层：银白核心 - 如月光绽放 ============
+        particle_core = self.ball(frame, 8, silver_white, 60, time_reach=0.4)
+        
+        # ============ 第二层：金色菊芒 - 主体光芒 ============
+        # 使用较少但更长的拖尾，模拟真实菊花烟花的优雅
+        particle_golden_rays = self.ball(frame, 55, pure_gold, 180, time_reach=1.3, tail=True)
+        
+        # ============ 第三层：暖金色次芒 - 增加层次 ============
+        particle_warm_rays = self.ball(frame, 45, warm_gold, 120, time_reach=1.1, tail=True)
+        
+        # ============ 第四层：淡金色点缀 ============
+        particle_pale_dots = self.ball(frame, 35, pale_gold, 80, time_reach=0.9)
+        
+        # ============ 第五层：银色光环 - 如涟漪扩散 ============
+        particle_ring_1 = self.circle(frame, 60, silver_white, num_frame=80, time_reach=1.2)
+        particle_ring_2 = self.circle(frame, 50, soft_white, num_frame=60, time_reach=1.0)
+        
+        # ============ 合并粒子 ============
+        total_particles = (particle_core + particle_golden_rays + particle_warm_rays + 
+                          particle_pale_dots + particle_ring_1 + particle_ring_2)
+        
+        # ============ 设置粒子属性 - 关键在于消散速度的控制 ============
+        
+        # 核心 - 缓慢消散，像余烬一样持久
+        for particle in particle_core:
+            particle.set_change_size(random.uniform(0.0003, 0.0005))
+        
+        # 金色主芒 - 持久的拖尾，末端二次爆炸成小型金色花
+        for particle in particle_golden_rays:
+            particle.set_change_size(random.uniform(0.0004, 0.0006))
+            particle.fire_type = self.ball_down if random.random() < 0.3 else self.nothing  # 末端绽放成双层小球
+        
+        # 暖金次芒 - 稍快消散，二次爆炸成更小的光点
+        for particle in particle_warm_rays:
+            particle.set_change_size(random.uniform(0.0005, 0.0007))
+            particle.fire_type = self.ball_down if random.random() < 0.3 else self.nothing # 行星状二次爆炸
+        
+        # 淡金点缀 - 较快消散，不二次爆炸
+        for particle in particle_pale_dots:
+            particle.set_change_size(random.uniform(0.0006, 0.0008))
+        
+        # 银色光环 - 优雅地扩散后消失
+        for particle in particle_ring_1 + particle_ring_2:
+            particle.set_change_size(random.uniform(0.0005, 0.0007))
+        
+        return total_particles
     
 
 
     def extrimely_big_fire_2(self,frame):
+        #color=frame.color
+        #matched_color=self.find_matched_color(color)
+        particle_1=self.ball(frame,58,COLOR[1],30,time_reach=1)#yellow
+        particle_2=self.ball(frame,32,COLOR[1],100,time_reach=1,tail=True)
+        particle_3=self.random_color(frame,10,70,tail=True)
+        # particle_4=self.circle(frame,54,COLOR[random.randint(0,len(COLOR)-1)],num_frame=100,time_reach=1)
+        # particle_5=self.circle(frame,54,COLOR[random.randint(0,len(COLOR)-1)],num_frame=100,time_reach=1)
+
+        #print(COLOR[random.randint(0,len(COLOR)-1)])
+
+        total_particles=particle_1+particle_2+particle_3
+
+        for particle in particle_3:
+            particle.set_change_size(random.uniform(0.001,0.0025))
+            particle.fire_type=self.ball
+            
+        for particle in particle_1:
+            particle.set_change_size(random.uniform(0.001,0.0015))
+            particle.fire_type=self.ball
+            
+
+        for particle in particle_2:
+            particle.set_change_size(random.uniform(0.00015,0.0003))
+            
+
+
+        return total_particles
+
+    def extrimely_big_fire_5(self,frame):
         #color=frame.color
         #matched_color=self.find_matched_color(color)
         particle_1=self.ball(frame,58,COLOR[1],30,time_reach=1)#yellow
@@ -1265,7 +1513,9 @@ class Auto_fire:
 
         self.extrimely_big_fire=[
             self.extrimely_big_fire_1,
-            self.extrimely_big_fire_2
+            self.extrimely_big_fire_2,
+            self.extrimely_big_fire_3,
+            self.extrimely_big_fire_4
         ]
 
     def choose_random_type(self):
@@ -4376,7 +4626,7 @@ class Auto_fire:
         self.firework_generator.generate_firework_thread(
             (0.0, 0.0, 0.0),
             (0.0, 44.0, 0.0),
-            self.type_firework.extrimely_big_fire_1
+            self.type_firework.extrimely_big_fire_3
         )
 
         # 八尺玉生命周期期间绝对不放别的
@@ -4507,7 +4757,7 @@ class Auto_fire:
         self.firework_generator.generate_firework_thread(
             (0.0, 0.0, 0.0),
             (0.0, 44.0, 0.0),
-            self.type_firework.extrimely_big_fire_2
+            self.type_firework.extrimely_big_fire_4
         )
 
         # 八尺玉生命周期期间不要放别的
@@ -5838,7 +6088,8487 @@ class Auto_fire:
             self._narration_stop.set()
 
 
+    def climax_hypernova_symphony(self):
+        T = self.type_firework
+        MIN_VY = 12.0
 
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype
+            )
+
+        # =========================
+        # Phase 1: 三重推进（能量柱不是贯穿，而是三点起势 + 旋流光轨）
+        # =========================
+        launchers = [(-26.0, -10.0), (0.0, 0.0), (26.0, 10.0)]  # (x, z)
+        helix_turns = 26
+        for k in range(helix_turns):
+            a = k * 0.35
+            for idx, (lx, lz) in enumerate(launchers):
+                spin = 1.0 if idx % 2 == 0 else -1.0
+                # 位置做轻微环绕，让“起势”更立体
+                px = lx + 4.0 * math.cos(a + idx)
+                pz = lz + 4.0 * math.sin(a * 0.9 + idx)
+
+                # 速度：上升 + 绕圈 + 纵深漂移
+                vx = 12.0 * math.cos(a * 1.2 + idx) * spin
+                vz = 12.0 * math.sin(a * 1.1 + idx) * spin + (6.0 if idx == 0 else (-6.0 if idx == 2 else 0.0))
+                vy = clamp_vy(22.0 + 0.08 * (abs(vx) + abs(vz)))
+
+                # 主体用 nothing，偶尔 ball_up 增加“喷泉上扬”视觉
+                ftype = T.ball_up if (k % 5 == 0 and idx != 1) else T.nothing
+                fire((px, 0.0, pz), (vx, vy, vz), ftype)
+
+            time.sleep(0.055)
+
+        time.sleep(0.25)
+
+        # =========================
+        # Phase 2: 立体棱镜环（多层深度爆闪，像水晶冠）
+        # =========================
+        ring_layers = [-18.0, -6.0, 6.0, 18.0]
+        ring_pts = 14
+        for wave in range(4):
+            R = 26.0 + 5.0 * math.sin(wave * 0.9)
+            for i in range(ring_pts):
+                th = (2.0 * math.pi) * (i / ring_pts) + wave * 0.45
+                cx = math.cos(th)
+                sz = math.sin(th)
+
+                depth = ring_layers[(i + wave) % len(ring_layers)]
+                px = R * cx
+                pz = R * sz + depth
+
+                # 速度：轻旋 + 外扩，上扬明显但不做中心贯穿
+                vx = 10.0 * cx + 10.0 * (-sz)
+                vz = 10.0 * sz + 10.0 * ( cx) + depth * 0.20
+                vy = clamp_vy(32.0 + 0.10 * (abs(vx) + abs(vz)))
+
+                # 这一段用“行星/球系”会特别炫
+                fpool = [T.planet_random_color, T.planet_ball, T.double_ball, T.mixed_color_ball, T.half_half_color_ball]
+                fire((px, 0.0, pz), (vx, vy, vz), fpool[(i + 2 * wave) % len(fpool)])
+
+            time.sleep(0.11)
+
+        time.sleep(0.25)
+
+        # =========================
+        # Phase 3: 花雨+心焰（美 + 炫 同时上强度）
+        # =========================
+        # 外圈“花雨”扫过，内圈“爱心焰”穿插（3D 纵深交错）
+        for step in range(18):
+            ph = step * 0.42
+            # 花雨：外圈 10 点
+            Nf = 4
+            Rf = 30.0
+            for i in range(Nf):
+                th = (2.0 * math.pi) * (i / Nf) + ph
+                px = Rf * math.cos(th)
+                pz = Rf * math.sin(th) + (14.0 * math.sin(ph * 0.7 + i * 0.6))
+
+                vx = 12.0 * (-math.sin(th))
+                vz = 12.0 * ( math.cos(th))
+                vy = clamp_vy(34.0)
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.flower)
+
+            # 心焰：内圈 6 点（少量但很点睛）
+            Nh = 6
+            Rh = 16.0
+            for j in range(Nh):
+                th = (2.0 * math.pi) * (j / Nh) - ph * 0.9
+                px = Rh * math.cos(th)
+                pz = Rh * math.sin(th) + (10.0 if j % 2 == 0 else -10.0)
+
+                vx = 8.0 * math.cos(th + 1.2)
+                vz = 8.0 * math.sin(th + 1.2)
+                vy = clamp_vy(30.0)
+
+                # 3D 爱心为主，偶尔 2D 双心做“闪一下”
+                ftype = T.random_color
+                fire((px, 0.0, pz), (vx, vy, vz), ftype)
+
+            time.sleep(0.095)
+
+        time.sleep(0.30)
+
+        # =========================
+        # Phase 4: 超新星终爆（全场最炫：多源连发 + 中心爆闪风暴）
+        # =========================
+        # 先做一圈“星核点火”（速度更快，密度更高）
+        ignition_sources = 12
+        for burst in range(3):
+            R0 = 34.0 - burst * 3.0
+            for i in range(ignition_sources):
+                th = (2.0 * math.pi) * (i / ignition_sources) + burst * 0.35
+                px = R0 * math.cos(th)
+                pz = R0 * math.sin(th) + 16.0 * math.sin(th * 0.6)
+
+                vx = 16.0 * (-math.sin(th))
+                vz = 16.0 * ( math.cos(th))
+                vy = clamp_vy(38.0)
+
+                hard = [T.double_ball, T.mixed_color_ball, T.random_color, T.planet_random_color]
+                fire((px, 0.0, pz), (vx, vy, vz), hard[(i + burst) % len(hard)])
+
+            time.sleep(0.09)
+
+        # 最后：中心“超新星风暴”——高速连续爆闪（就是爽）
+        for tick in range(26):
+            a = tick * 0.55
+            # 中心附近做一个“旋转喷发环”，但半径小，形成“核爆涌出”
+            coreN = 8
+            r = 6.0 + 2.0 * math.sin(a)
+            for i in range(coreN):
+                th = (2.0 * math.pi) * (i / coreN) + a
+                px = r * math.cos(th)
+                pz = r * math.sin(th) + 10.0 * math.sin(a * 0.7 + i)
+
+                # 速度：强上扬 + 强旋转（炫的核心）
+                vx = 18.0 * math.cos(th + 0.9)
+                vz = 18.0 * math.sin(th + 0.9)
+                vy = clamp_vy(42.0 + 0.08 * (abs(vx) + abs(vz)))
+
+                # 终爆类型池：最炫的都上
+                final_pool = [T.double_ball, T.mixed_color_ball, T.half_half_color_ball, T.planet_random_color, T.random_color]
+                fire((px, 0.0, pz), (vx, vy, vz), final_pool[(tick + i) % len(final_pool)])
+
+            # 同时给两侧补两发“侧翼爆闪”，形成舞台包围感
+            if tick % 2 == 0:
+                for side in (-1.0, 1.0):
+                    px = side * 26.0
+                    pz = 12.0 * math.sin(a)
+                    vx = -side * 8.0
+                    vz = 6.0 * math.cos(a * 0.8)
+                    vy = clamp_vy(36.0)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.circle)
+
+            time.sleep(0.06)
+
+
+    def climax_tree_shape(self):
+        T = self.type_firework
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # =========================
+        # 配色（RGB 0~255）
+        # =========================
+        TRUNK = (120, 72, 35)          # 树干棕
+        TRUNK_DARK = (90, 52, 26)      # 深棕阴影
+        LEAF_1 = (40, 180, 70)         # 叶绿
+        LEAF_2 = (20, 140, 55)         # 深绿
+        LEAF_3 = (90, 220, 120)        # 亮绿高光
+        BLOOM = (255, 120, 170)        # 粉花点缀
+        FRUIT = (255, 70, 60)          # 红果点缀
+        GOLD = (255, 220, 90)          # 金色闪点
+
+        # =========================
+        # 0) 地面根系（低矮扩散，不抢主戏，建立“树扎根”）
+        # =========================
+        root_n = 10
+        for i in range(root_n):
+            u = (i / (root_n - 1)) * 2.0 - 1.0  # [-1,1]
+            px = u * 8.0
+            pz = (u * 6.0)
+            vx = u * 10.0
+            vz = (u * 6.0)
+            vy = clamp_vy(14.0)  # 低矮但必须 >0
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, TRUNK_DARK)
+            time.sleep(0.03)
+
+        time.sleep(0.15)
+
+        # =========================
+        # 1) 树干生长（竖直线条，厚实）
+        # =========================
+        # 用多股 very-small vx/vz 的 nothing 叠出粗树干
+        trunk_cols = [(-1.6, -0.8), (-0.8, 0.6), (0.0, 0.0), (0.9, -0.6), (1.6, 0.8)]
+        trunk_steps = 18
+        for s in range(trunk_steps):
+            # 越往后越高，像“长出来”
+            vy = clamp_vy(22.0 + s * 1.2)
+
+            for (ox, oz) in trunk_cols:
+                # 树干几乎竖直：vx/vz 很小，只做轻微纹理
+                vx = ox * 0.8
+                vz = oz * 0.8
+                col = TRUNK if (s % 3 != 0) else TRUNK_DARK
+                fire((ox, 0.0, oz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(0.06)
+
+        time.sleep(0.20)
+
+        # =========================
+        # 2) 树枝分叉（清晰的“Y型/分叉”轮廓）
+        # =========================
+        # 这些“枝条”不做旋涡，只做斜向上+外扩，左右对称并带一点3D深度
+        branch_levels = [
+            # (spread_x, spread_z, up, count, color)
+            (10.0,  4.0, 26.0, 7, TRUNK),
+            (14.0, -6.0, 28.0, 8, TRUNK_DARK),
+            (18.0,  8.0, 30.0, 9, TRUNK),
+        ]
+        for (sx, sz, up, cnt, bcol) in branch_levels:
+            for i in range(cnt):
+                u = (i / (cnt - 1)) * 2.0 - 1.0  # [-1,1] 左右展开
+                # 主枝：向左右外扩；z 方向也分出前后景
+                vx = u * sx
+                vz = (u * sz)
+                vy = clamp_vy(up + 2.0 * (1.0 - abs(u)))  # 中间略高，枝叉更“提”
+                # 起点从地面略偏中间，让枝条看起来从树干“长出”
+                px = u * 1.0
+                pz = u * 0.8
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, bcol)
+                time.sleep(0.02)
+            time.sleep(0.10)
+
+        time.sleep(0.25)
+
+        # =========================
+        # 3) 树冠叶团（主视觉：巨大树冠，分层、很满、很漂亮）
+        # =========================
+        # 叶团用会“好看地爆开”的类型（球/行星/混色/花）
+        canopy_types = [
+            T.planet_random_color,
+            T.planet_ball,
+            T.mixed_color_ball,
+            T.half_half_color_ball,
+            T.double_ball,
+            T.flower,
+        ]
+
+        # 树冠做三层：下冠、中冠、上冠（越高越集中）
+        canopy_layers = [
+            # (radius, up, depth_amp, bursts, base_colorA, base_colorB)
+            (26.0, 34.0, 14.0, 18, LEAF_1, LEAF_2),
+            (22.0, 36.0, 10.0, 16, LEAF_2, LEAF_3),
+            (18.0, 38.0,  8.0, 14, LEAF_1, LEAF_3),
+        ]
+
+        # 为了“树形”而不是“球形”：让下冠更宽，上冠更窄
+        phase = 0.0
+        for layer_idx, (R, up, depth_amp, bursts, cA, cB) in enumerate(canopy_layers):
+            phase += 0.45
+            for i in range(bursts):
+                th = (2.0 * math.pi) * (i / bursts) + phase
+
+                # 树冠发射点：围绕树干底部，但不画圈——只是起点分散
+                px0 = 2.0 * math.cos(th)
+                pz0 = 2.0 * math.sin(th)
+
+                # 速度：外扩到树冠半径（无旋涡，只径向扩散）
+                vx = (R * 0.45) * math.cos(th)
+                vz = (R * 0.45) * math.sin(th) + depth_amp * math.sin(th * 0.6)
+
+                # 向上：层越高越往上
+                vy = clamp_vy(up + 0.08 * (abs(vx) + abs(vz)))
+
+                # 颜色交替，让叶团有层次
+                col = cA if (i % 2 == 0) else cB
+
+                ftype = canopy_types[(i + layer_idx * 2) % len(canopy_types)]
+                fire((px0, 0.0, pz0), (vx, vy, vz), ftype, col)
+
+                time.sleep(0.02)
+
+            time.sleep(0.18)
+
+        time.sleep(0.25)
+
+        # =========================
+        # 4) 点缀：花与果（让“树”更像树，而不是单纯一团绿）
+        # =========================
+        # 少量粉花（flower / love_3D）+ 少量红果（ball / circle）
+        accents = 14
+        for i in range(accents):
+            th = (2.0 * math.pi) * (i / accents)
+            # 点缀更靠近树冠中上部
+            vx = 10.0 * math.cos(th)
+            vz = 10.0 * math.sin(th) + 6.0 * math.sin(th * 0.7)
+            vy = clamp_vy(34.0)
+
+            if i % 4 == 0:
+                ftype, col = T.flower, BLOOM
+            elif i % 4 == 1:
+                ftype, col = T.circle, FRUIT
+            elif i % 4 == 2:
+                ftype, col = T.love_3D, BLOOM
+            else:
+                ftype, col = T.random_color, GOLD
+
+            fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+            time.sleep(0.05)
+
+        # 结束：给观众一点余韵
+        time.sleep(0.30)
+
+
+    def climax_van_gogh_starry_night(self, intensity=1.0):
+        T = self.type_firework
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 调色板（梵高星空风）
+        # -------------------------
+        NIGHT_1 = (10, 20, 55)      # 深夜蓝
+        NIGHT_2 = (20, 45, 105)     # 群青
+        NIGHT_3 = (35, 80, 160)     # 亮蓝
+        NIGHT_4 = (70, 130, 200)    # 青蓝高光（油画笔触亮边）
+
+        STAR_1  = (255, 220, 90)    # 星黄
+        STAR_2  = (255, 245, 200)   # 星白金
+        MOON_1  = (255, 235, 140)   # 月亮黄
+        MOON_2  = (255, 250, 220)   # 月晕亮白
+
+        CYPRESS_1 = (8, 15, 10)     # 柏树近黑绿
+        CYPRESS_2 = (15, 35, 20)    # 柏树暗绿边
+
+        TOWN_1 = (255, 190, 90)     # 村庄灯火
+        TOWN_2 = (255, 120, 70)     # 暖橙窗光
+
+        # 强度安全处理
+        intensity = max(0.4, float(intensity))
+
+        # -------------------------
+        # Phase 0：铺底“夜空油画底色”（大面积 but 轻）
+        # -------------------------
+        # 在上半天幕铺一层深蓝“雾化笔刷”，主要用 nothing
+        haze_rows = int(round(7 * intensity))
+        haze_cols = int(round(18 * intensity))
+        haze_rows = max(5, haze_rows)
+        haze_cols = max(14, haze_cols)
+
+        for r in range(haze_rows):
+            z_base = 10.0 + r * 7.0
+            for c in range(haze_cols):
+                u = (c / max(1, haze_cols - 1)) * 2.0 - 1.0
+                px = u * 42.0
+                pz = z_base + 8.0 * math.sin(u * 2.0 + r)
+
+                # 非旋涡：轻微横向刷动 + 稳定上扬
+                vx = 6.0 * math.sin(0.8 * r + u * 2.3)
+                vz = 3.0 * math.cos(0.7 * r + u * 1.7)
+                vy = clamp_vy(16.0 + 2.0 * intensity)
+
+                col = [NIGHT_1, NIGHT_2, NIGHT_3][(r + c) % 3]
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if c % 4 == 0:
+                    time.sleep(0.004)
+
+            time.sleep(0.02)
+
+        time.sleep(0.18)
+
+        # -------------------------
+        # Phase 1：梵高式“旋云笔触”（真正像画出来的风）
+        # -------------------------
+        # 用多条“弧形笔刷带”叠出星空的流动感（像油画刷子扫过）
+        bands = int(round(7 * intensity))
+        strokes_per_band = int(round(30 * intensity))
+        bands = max(5, bands)
+        strokes_per_band = max(22, strokes_per_band)
+
+        # 画面中心偏左（梵高星空常见的旋云核心）
+        cx, cz = (-10.0, 26.0)
+
+        for b in range(bands):
+            # 每条带不同半径与倾斜，避免重复
+            R0 = 10.0 + b * 5.0
+            tilt = 0.6 + 0.15 * b
+            zlift = (b - (bands - 1) / 2.0) * 2.0
+
+            for i in range(strokes_per_band):
+                t = i / max(1, strokes_per_band - 1)
+
+                # 弧形轨迹（不是规则圆）：半径随 t 波动，像手刷出来
+                ang = (1.2 * math.pi) * t + 0.35 * math.sin(5.0 * t + b)
+                R = R0 * (0.85 + 0.25 * math.sin(2.0 * math.pi * t + b))
+
+                px = cx + R * math.cos(ang)
+                pz = cz + (R * tilt) * math.sin(ang) + zlift
+
+                # 速度沿“笔触切线方向”，再加一点上扬（像刷子掠过天空）
+                tx = -math.sin(ang)
+                tz =  math.cos(ang) * tilt
+
+                speed = (22.0 + 10.0 * math.sin(2.0 * math.pi * t + b)) * intensity
+                vx = speed * tx + 3.0 * math.cos(ang * 2.0 + b)
+                vz = speed * tz + 3.0 * math.sin(ang * 2.0 + b)
+                vy = clamp_vy(18.0 + 6.0 * intensity)
+
+                # 笔触高光：偶尔用更亮的蓝
+                col = NIGHT_2
+                if (i + b) % 6 == 0:
+                    col = NIGHT_4
+                elif (i + b) % 3 == 0:
+                    col = NIGHT_3
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 6 == 0:
+                    time.sleep(0.005)
+
+            time.sleep(0.03)
+
+        time.sleep(0.18)
+
+        # -------------------------
+        # Phase 2：星点爆闪（星黄 + 星白金）
+        # -------------------------
+        # 固定一些“星星中心”，每颗星做一圈爆闪 + 少量拖尾
+        star_centers = [
+            (-28.0, 34.0), (-16.0, 38.0), (-2.0, 42.0), (12.0, 40.0), (26.0, 36.0),
+            (-22.0, 24.0), (-6.0, 30.0), (10.0, 28.0), (24.0, 26.0),
+            (-14.0, 18.0), (2.0, 20.0), (18.0, 18.0),
+        ]
+
+        star_types = [T.circle, T.ball, T.double_ball, T.planet_ball, T.planet_random_color]
+        for s, (sx, sz) in enumerate(star_centers):
+            bursts = int(round((10 + (s % 5) * 2) * intensity))
+            bursts = max(10, bursts)
+            for i in range(bursts):
+                th = (2.0 * math.pi) * (i / bursts)
+
+                # 从星心向外“放射”，形成梵高星的放射感
+                vx = (10.0 + 6.0 * math.sin(i)) * math.cos(th)
+                vz = (10.0 + 6.0 * math.cos(i)) * math.sin(th)
+                vy = clamp_vy(30.0 + 4.0 * intensity)
+
+                col = STAR_1 if (i % 2 == 0) else STAR_2
+                ftype = star_types[(s + i) % len(star_types)]
+                fire((sx, 0.0, sz), (vx, vy, vz), ftype, col)
+
+                if i % 4 == 0:
+                    time.sleep(0.01)
+
+            # 星星“光晕拖尾”（nothing）——更像油画晕染
+            halo = int(round(10 * intensity))
+            for j in range(halo):
+                th = (2.0 * math.pi) * (j / halo)
+                vx = 8.0 * math.cos(th)
+                vz = 8.0 * math.sin(th)
+                vy = clamp_vy(20.0 + 3.0 * intensity)
+                fire((sx, 0.0, sz), (vx, vy, vz), T.nothing, STAR_2)
+            time.sleep(0.08)
+
+        time.sleep(0.25)
+
+        # -------------------------
+        # Phase 3：右上角大月亮（超级亮、超级大）
+        # -------------------------
+        moon_center = (30.0, 44.0)
+        moon_rings = int(round(4 * intensity))
+        moon_rings = max(3, moon_rings)
+
+        for ring in range(moon_rings):
+            R = 4.0 + ring * 4.0
+            N = int(round((18 + ring * 8) * intensity))
+            N = max(18, N)
+            for i in range(N):
+                th = (2.0 * math.pi) * (i / N)
+                px = moon_center[0] + 0.8 * math.cos(th)  # 起点集中一点，像“月团”
+                pz = moon_center[1] + 0.8 * math.sin(th)
+
+                vx = (12.0 + 4.0 * ring) * math.cos(th)
+                vz = (12.0 + 4.0 * ring) * math.sin(th)
+                vy = clamp_vy(34.0 + 3.0 * ring)
+
+                col = MOON_2 if ring % 2 == 0 else MOON_1
+                ftype = T.double_ball if ring >= 2 else T.ball
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 6 == 0:
+                    time.sleep(0.008)
+
+            # 月晕刷痕（nothing，高光边）
+            for j in range(int(round(14 * intensity))):
+                th = (2.0 * math.pi) * (j / max(1, int(round(14 * intensity))))
+                vx = 10.0 * math.cos(th)
+                vz = 10.0 * math.sin(th)
+                vy = clamp_vy(22.0)
+                fire((moon_center[0], 0.0, moon_center[1]), (vx, vy, vz), T.nothing, MOON_2)
+
+            time.sleep(0.10)
+
+        time.sleep(0.22)
+
+        # -------------------------
+        # Phase 4：左下角柏树剪影（黑绿“火焰形”竖刷）
+        # -------------------------
+        # 柏树像黑色火焰：用很多短竖笔触（nothing）堆形
+        cypress_base = (-30.0, -18.0)
+        trunk_lines = int(round(26 * intensity))
+        trunk_lines = max(20, trunk_lines)
+
+        for i in range(trunk_lines):
+            u = (i / max(1, trunk_lines - 1))  # 0..1
+            # 柏树宽度随高度变化（中上更宽）
+            width = 5.0 + 8.0 * math.sin(math.pi * u)
+            px = cypress_base[0] + (width * (2.0 * (u - 0.5))) * 0.12 + 2.0 * math.sin(i * 0.4)
+            pz = cypress_base[1] + 4.0 * math.sin(i * 0.3)
+
+            vx = 2.0 * math.sin(i * 0.7)
+            vz = 1.5 * math.cos(i * 0.6)
+            vy = clamp_vy(18.0 + 18.0 * u + 4.0 * intensity)
+
+            col = CYPRESS_1 if i % 3 != 0 else CYPRESS_2
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(0.02)
+
+        time.sleep(0.18)
+
+        # -------------------------
+        # Phase 5：底部村庄灯火（暖色小爆点，衬托画面）
+        # -------------------------
+        houses = int(round(18 * intensity))
+        houses = max(12, houses)
+        for i in range(houses):
+            u = (i / max(1, houses - 1)) * 2.0 - 1.0
+            px = u * 38.0
+            pz = -38.0 + 3.0 * math.sin(i * 0.7)
+
+            vx = 0.5 * math.sin(i)
+            vz = 0.5 * math.cos(i)
+            vy = clamp_vy(20.0)
+
+            col = TOWN_1 if i % 2 == 0 else TOWN_2
+            ftype = T.circle if i % 3 == 0 else T.random_color
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            time.sleep(0.02)
+
+        time.sleep(0.22)
+
+        # -------------------------
+        # Phase 6：终章“整幅画点亮”（蓝笔触 + 金闪同拍连发）
+        # -------------------------
+        finale_ticks = int(round(22 * intensity))
+        finale_ticks = max(18, finale_ticks)
+
+        for k in range(finale_ticks):
+            a = k * 0.35
+
+            # 蓝色高光刷：横向大笔触（像油画扫亮）
+            N = int(round(16 * intensity))
+            N = max(12, N)
+            z_row = 14.0 + 26.0 * math.sin(0.2 * k)  # 行在上半区游走
+            for i in range(N):
+                u = (i / max(1, N - 1)) * 2.0 - 1.0
+                px = u * 48.0
+                pz = z_row + 6.0 * math.sin(u * 2.0 + a)
+
+                vx = 10.0 + 6.0 * math.sin(a + u)
+                vz = 3.0 * math.cos(a * 0.8 + u * 2.0)
+                vy = clamp_vy(18.0 + 5.0 * intensity)
+
+                col = NIGHT_4 if (i + k) % 3 == 0 else NIGHT_3
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            # 金闪：在星云核心附近打几发高亮星爆（非常爽）
+            gold_bursts = int(round(6 * intensity))
+            gold_bursts = max(4, gold_bursts)
+            for j in range(gold_bursts):
+                th = a + j * (2.0 * math.pi / gold_bursts)
+                sx = cx + 10.0 * math.cos(th)
+                sz = cz + 10.0 * math.sin(th)
+
+                vx = 14.0 * math.cos(th)
+                vz = 14.0 * math.sin(th)
+                vy = clamp_vy(36.0)
+
+                ftype = [T.double_ball, T.planet_random_color, T.mixed_color_ball][(k + j) % 3]
+                fire((sx, 0.0, sz), (vx, vy, vz), ftype, STAR_1)
+
+            time.sleep(0.07)
+
+
+    def climax_aurora_gate_10(self, intensity=1.0):
+        T = self.type_firework
+        MIN_VY = 12.0
+
+        intensity = max(0.4, float(intensity))
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # =========================
+        # 梵高不需要，这里是“极光舞台门”的调色板（RGB 0~255）
+        # =========================
+        # 极光绿 -> 青 -> 蓝 -> 紫（高光）
+        AURORA = [
+            (40, 255, 160),
+            (20, 210, 180),
+            (40, 170, 255),
+            (120, 120, 255),
+            (200, 120, 255),
+        ]
+        # 门节点金白（像舞台灯珠）
+        GOLD = (255, 220, 110)
+        WHITEGOLD = (255, 245, 220)
+
+        # =========================
+        # 舞台尺度（很大）
+        # =========================
+        X_LEFT = -48.0
+        X_RIGHT = 48.0
+        Z_SPAN = 34.0
+
+        # 发射密度（越大越壮观）
+        curtains = int(round(10 * intensity))     # 每侧极光帘条数
+        curtains = max(8, curtains)
+
+        pulses = int(round(20 * intensity))       # 极光推进“脉冲次数”（时间长度）
+        pulses = max(16, pulses)
+
+        # 每个脉冲每侧发几条“帘丝”（同一帘里做多丝更像帘布）
+        strands = int(round(4 * intensity))
+        strands = max(3, strands)
+
+        # =========================
+        # Phase 1：左右极光拱门生成（主体：T.nothing）
+        # - 不做漩涡：不绕圈，只做“向上+向内”的拱形弹道
+        # - 通过不同 curtain 的角度/高度形成“门”的轮廓
+        # =========================
+        for p in range(pulses):
+            # 进度 0..1
+            u = p / max(1, pulses - 1)
+
+            # 门的“开合感”：中段最强，前后略弱（像舞台灯慢慢开到最亮）
+            power = 0.70 + 0.55 * math.sin(math.pi * u)
+
+            # 随时间轻微变换：让每次规律不一样但仍然像“帘”
+            wob = math.sin(0.9 * p) * 0.8
+
+            # 这次脉冲选择主色（渐变滚动）
+            c_main = AURORA[p % len(AURORA)]
+            c_hi = AURORA[(p + 2) % len(AURORA)]
+
+            for c in range(curtains):
+                # curtain 的位置分布：覆盖整条门，前后景都有（强 3D）
+                z_base = (c / max(1, curtains - 1)) * 2.0 - 1.0  # [-1,1]
+                z = z_base * (Z_SPAN * 0.5)
+
+                # 每条帘的“向内角度”：靠上/靠中更往中心收
+                inward = 26.0 + 18.0 * (1.0 - abs(z_base))  # 中间更收
+                upward = 34.0 + 16.0 * (1.0 - abs(z_base))  # 中间更高
+
+                # 轻微深度扰动（不是旋涡，只是极光的抖动）
+                z_jit = 3.0 * math.sin(p * 0.55 + c * 0.9) + wob
+
+                # ---- 左门帘：从左往中心拱 ----
+                for s in range(strands):
+                    # 多丝：让帘布更厚、更“帘”
+                    off = (s - (strands - 1) / 2.0) * (1.6 + 0.6 * power)
+                    posL = (X_LEFT, 0.0, z + z_jit + off)
+
+                    vxL = inward * power
+                    vzL = (6.0 * z_base + 4.0 * math.sin(p * 0.45 + s)) * power
+                    vyL = clamp_vy((upward * power) + 8.0)
+
+                    # 颜色：丝与丝之间做高光交替
+                    colL = c_main if (s % 2 == 0) else c_hi
+                    fire(posL, (vxL, vyL, vzL), T.nothing, colL)
+
+                # ---- 右门帘：从右往中心拱 ----
+                for s in range(strands):
+                    off = (s - (strands - 1) / 2.0) * (1.6 + 0.6 * power)
+                    posR = (X_RIGHT, 0.0, z - z_jit - off)
+
+                    vxR = -inward * power
+                    vzR = (-6.0 * z_base + 4.0 * math.cos(p * 0.42 + s)) * power
+                    vyR = clamp_vy((upward * power) + 8.0)
+
+                    colR = c_main if (s % 2 == 0) else c_hi
+                    fire(posR, (vxR, vyR, vzR), T.nothing, colR)
+
+            # 节奏：持续推进但不“断层”
+            time.sleep(0.06)
+
+        time.sleep(0.25)
+
+        # =========================
+        # Phase 2：拱门“节点点亮”（球系/行星爆炸）
+        # - 让观众明确看到“门的骨架”被点亮
+        # =========================
+        node_types = [T.planet_ball, T.planet_random_color, T.double_ball, T.mixed_color_ball, T.half_half_color_ball]
+        node_rings = int(round(5 * intensity))
+        node_rings = max(4, node_rings)
+
+        for ring in range(node_rings):
+            # 节点分布在左右两侧与上方区域（大门的“铆钉灯”）
+            N = 10 + ring * 2
+            N = int(round(N * intensity))
+            N = max(10, N)
+
+            # 节点“更大更高”：后几圈更猛烈
+            up = 34.0 + ring * 3.5
+            inw = 22.0 + ring * 2.0
+
+            for i in range(N):
+                th = (2.0 * math.pi) * (i / N)
+
+                # 位置：靠两侧，但略向中心（像门边灯带）
+                side = -1.0 if (i % 2 == 0) else 1.0
+                px = side * (44.0 - ring * 4.0)
+                pz = (Z_SPAN * 0.55) * math.sin(th) + 8.0 * math.sin(th * 0.5)
+
+                # 速度：向内 + 向上（不旋转）
+                vx = -side * inw
+                vz = 8.0 * math.sin(th)  # 轻微沿深度铺开
+                vy = clamp_vy(up)
+
+                ftype = node_types[(i + ring) % len(node_types)]
+                col = GOLD if (i % 3 != 0) else WHITEGOLD
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 5 == 0:
+                    time.sleep(0.01)
+
+            time.sleep(0.10)
+
+        time.sleep(0.22)
+
+        # =========================
+        # Phase 3：门内辉光（中心金白“光瀑”）
+        # - 让整个门“亮起来”，把高潮推到最满
+        # =========================
+        glow_ticks = int(round(28 * intensity))
+        glow_ticks = max(22, glow_ticks)
+
+        for k in range(glow_ticks):
+            a = k * 0.35
+            # 每 tick 生成两层：一层是金色粒点（爆），一层是白金光丝（nothing）
+            # 让门内像舞台烟雾被灯打亮
+            innerN = int(round(10 * intensity))
+            innerN = max(8, innerN)
+
+            # 白金光丝（更连贯）
+            for i in range(innerN):
+                u = (i / max(1, innerN - 1)) * 2.0 - 1.0
+                px = u * 16.0
+                pz = 10.0 * math.sin(a * 0.7 + u * 2.0)  # 门内轻微起伏
+
+                vx = 3.0 * math.sin(a + u)
+                vz = 3.0 * math.cos(a * 0.8 + u * 1.7)
+                vy = clamp_vy(22.0 + 6.0 * intensity)
+
+                col = WHITEGOLD if (i + k) % 3 == 0 else GOLD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            # 金色闪点（更炸、更华丽）
+            if k % 2 == 0:
+                sparks = int(round(6 * intensity))
+                sparks = max(4, sparks)
+                for j in range(sparks):
+                    th = a + j * (2.0 * math.pi / sparks)
+                    px = 10.0 * math.cos(th)
+                    pz = 12.0 * math.sin(th)
+
+                    vx = 10.0 * math.cos(th)
+                    vz = 10.0 * math.sin(th)
+                    vy = clamp_vy(36.0)
+
+                    ftype = [T.circle, T.random_color, T.double_ball][(k + j) % 3]
+                    fire((px, 0.0, pz), (vx, vy, vz), ftype, GOLD)
+
+            time.sleep(0.07)
+
+        time.sleep(0.30)
+
+    def climax_bloom_superfield_low_flower_love(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.2
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 伪随机（不依赖 random）
+        # -------------------------
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 配色：花海的三套色域（你也可以按主题改）
+        # -------------------------
+        # A：粉紫梦幻
+        A1, A2, A3 = (255, 120, 190), (190, 110, 255), (255, 180, 230)
+        # B：青绿霓彩
+        B1, B2, B3 = (60, 220, 200), (40, 170, 255), (120, 255, 170)
+        # C：金橙华丽
+        C1, C2, C3 = (255, 220, 110), (255, 150, 80), (255, 245, 220)
+
+        palettes = [
+            (A1, A2, A3),
+            (B1, B2, B3),
+            (C1, C2, C3),
+        ]
+
+        # 主体爆炸类型池（花/爱心少用）
+        main_types = [
+            T.planet_random_color, T.planet_ball,
+            T.double_ball, T.mixed_color_ball, T.half_half_color_ball,
+            T.random_color, T.circle, T.ball, T.ball_up
+        ]
+
+        # 花与爱心：只做极少点缀
+        accent_types = [T.flower, T.love_3D]
+
+        # -------------------------
+        # 花海结构：3 高度层 * 2 纵深层
+        # -------------------------
+        layers = [
+            # (radius, vy_base, depth_shift, count_per_pulse)
+            (26.0, 30.0, -14.0, int(round(18 * intensity))),  # 低层（更宽）
+            (22.0, 33.0,  14.0, int(round(16 * intensity))),  # 中层
+            (18.0, 36.0,   0.0, int(round(14 * intensity))),  # 高层（更集中）
+        ]
+
+        # 脉冲次数（越多越“花海铺满”）
+        pulses = int(round(16 * intensity))
+        pulses = max(12, pulses)
+
+        # -------------------------
+        # Phase 1：快速铺“花海底”（密集但有秩序的环状分布 + 深度错层）
+        # -------------------------
+        for p in range(pulses):
+            ph = p * (0.35 + 0.08 * rnd())  # 每次相位变化不同，避免重复感
+            pal = palettes[p % len(palettes)]
+            # 每次脉冲：三层同时打，形成“整片开花”
+            for li, (R, vy0, dshift, cnt) in enumerate(layers):
+                cnt2 = max(10, cnt + int(round((rnd() - 0.5) * 6)))  # 每次数量微变
+                for i in range(cnt2):
+                    th = (2.0 * math.pi) * (i / cnt2) + ph + (li * 0.18)
+
+                    # 起点：轻微散开（像花朵从空气里冒出来）
+                    px0 = 2.5 * math.cos(th * 1.7)
+                    pz0 = 2.5 * math.sin(th * 1.4) + dshift * 0.15
+
+                    # 速度：径向扩张 + 少量纵深起伏（不旋涡）
+                    vx = (R * 0.42) * math.cos(th) + (rnd() * 2.0 - 1.0) * 2.0
+                    vz = (R * 0.42) * math.sin(th) + dshift + 6.0 * math.sin(th * 0.6)
+
+                    vy = clamp_vy(vy0 + 0.08 * (abs(vx) + abs(vz)))
+
+                    # 类型：绝大部分用 main_types
+                    ftype = main_types[(p + i + li) % len(main_types)] if rnd() < 0.4 else T.random_color
+
+                    # 颜色：同一脉冲内做三色轮换，形成“花海花色分区”
+                    col = pal[i % 3]
+                    fire((px0, 0.0, pz0), (vx, vy, vz), ftype, col)
+
+                    if i % 6 == 0:
+                        time.sleep(0.004)
+
+            # 极少“花/爱心”点缀：每 4 个脉冲只给 1~2 发
+            if p % 4 == 0:
+                accents = 1 if rnd() < 0.6 else 2
+                for a in range(accents):
+                    th = ph + a * 2.2
+                    vx = 12.0 * math.cos(th)
+                    vz = 12.0 * math.sin(th)
+                    vy = clamp_vy(34.0)
+
+                    ftype = accent_types[(p + a) % len(accent_types)]
+                    col = (255, 200, 230) if ftype == T.flower else (255, 245, 220)
+                    fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+
+            time.sleep(0.08)
+
+        time.sleep(0.25)
+
+        # -------------------------
+        # Phase 2：超级扩张终章（把“花海”推到最大画幅）
+        # - 大半径、更多点、金白高光穿插
+        # -------------------------
+        finale_ticks = int(round(22 * intensity))
+        finale_ticks = max(18, finale_ticks)
+
+        for k in range(finale_ticks):
+            a = k * 0.42 + 0.6 * math.sin(k * 0.3)
+
+            # 每 tick 两圈：外圈更大更炸，内圈更密更亮
+            for ring in range(2):
+                R = (34.0 if ring == 0 else 22.0) + 4.0 * math.sin(a + ring)
+                N = int(round((22 if ring == 0 else 18) * intensity))
+                N = max(14, N)
+
+                for i in range(N):
+                    th = (2.0 * math.pi) * (i / N) + a
+
+                    px0 = 0.0
+                    pz0 = 0.0
+
+                    vx = (R * 0.46) * math.cos(th) + (rnd() * 2.0 - 1.0) * 3.0
+                    vz = (R * 0.46) * math.sin(th) + (rnd() * 2.0 - 1.0) * 6.0
+                    vy = clamp_vy((38.0 if ring == 0 else 34.0) + 0.08 * (abs(vx) + abs(vz)))
+
+                    ftype = [T.double_ball, T.mixed_color_ball, T.planet_random_color, T.half_half_color_ball][(k + i + ring) % 4] if rnd() < 0.3 else T.random_color
+
+                    # 颜色：金白高光为主，少量彩色点亮
+                    if (i + k) % 5 == 0:
+                        col = (255, 245, 220)
+                    elif (i + k) % 3 == 0:
+                        col = (255, 220, 110)
+                    else:
+                        pal = palettes[(k + ring) % len(palettes)]
+                        col = pal[i % 3]
+
+                    fire((px0, 0.0, pz0), (vx, vy, vz), ftype, col)
+
+                    if i % 7 == 0:
+                        time.sleep(0.004)
+
+            # 最后只给一次 flower 作为“花海签名”（非常少）
+            if k == finale_ticks - 2:
+                fire((0.0, 0.0, 0.0), (0.0, clamp_vy(40.0), 0.0), T.flower, (255, 200, 230))
+
+            time.sleep(0.07)
+
+        time.sleep(0.25)
+
+
+    def climax_rainbow_waterfall(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.5
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 彩虹色带（RGB 0~255）
+        # -------------------------
+        R = (255, 70, 70)
+        O = (255, 140, 60)
+        Y = (255, 230, 80)
+        G = (60, 230, 120)
+        C = (60, 210, 255)
+        B = (60, 120, 255)
+        P = (190, 90, 255)
+        RAINBOW = [R, O, Y, G, C, B, P]
+
+        # -------------------------
+        # 瀑布尺寸（很大）
+        # -------------------------
+        WIDTH = 52.0          # 瀑布宽度（越大越震撼）
+        TOP_Z = 34.0          # 瀑布从偏前景开始
+        DEPTH_SWAY = 18.0     # 水幕在 z 上的“前后起伏”（更 3D）
+        Y_SHIFT = 0.0
+
+        # -------------------------
+        # 密度控制
+        # -------------------------
+        # 帘线数量：越多越像“水幕”
+        curtains = int(round(28 * intensity))
+        curtains = max(20, curtains)
+
+        # 每条帘线每个节拍喷几滴（点越多越“连成水流”）
+        drops = int(round(3 + 3 * intensity))
+        drops = max(3, drops)
+
+        # 总节拍数：这一波持续时间（更长更壮观）
+        ticks = int(round(120 * intensity))  # intensity=1 大约 120 * 0.05 ~ 6秒左右
+        ticks = max(90, ticks)
+
+        # 节拍间隔：越小越密
+        dt = 0.05 / max(0.7, intensity)
+
+        # -------------------------
+        # 倾斜方向：让瀑布“往舞台中心/前方倾泻”
+        # 由于 vy 不能为负，我们用 vx/vz 来做“下落错觉”，vy 稳定上扬保证合法
+        # -------------------------
+        tilt_x = -18.0   # 整体向左倾斜（你可以改成 +18 向右）
+        tilt_z = -10.0   # 整体向观众方向倾斜（或反过来）
+
+        # -------------------------
+        # Phase 1：建立水幕（清晰彩虹帘）
+        # -------------------------
+        for k in range(ticks):
+            t = k * dt
+
+            # 水幕“呼吸”：中段最强，前后稍弱（更像瀑布浪头）
+            swell = 0.75 + 0.45 * math.sin(min(1.0, t / (ticks * dt)) * math.pi)
+
+            # z 方向起伏：让水幕有体积（不是平板）
+            z_wave = TOP_Z + (DEPTH_SWAY * 0.5) * math.sin(t * 0.9)
+
+            for i in range(curtains):
+                u = (i / max(1, curtains - 1)) * 2.0 - 1.0  # [-1,1]
+                x_line = u * (WIDTH * 0.5)
+
+                # 每条帘线固定一种彩虹色（排列清晰）
+                col = RAINBOW[i % len(RAINBOW)]
+
+                # 帘线自身也有轻微摆动（让瀑布活起来，但仍规整）
+                x_jit = 2.2 * math.sin(t * 1.6 + u * 2.0)
+                z_line = z_wave + (DEPTH_SWAY * 0.35) * math.sin(u * 1.6 + t * 1.1)
+
+                # 每条帘线每 tick 多滴“水”
+                for d in range(drops):
+                    # 滴的位置：沿同一帘线略错开
+                    off = (d - (drops - 1) / 2.0) * 1.3
+                    px = x_line + x_jit
+                    pz = z_line + off
+
+                    # 速度：向“倾斜方向”推进，vy 稳定上扬（合法），营造倾泻动势
+                    vx = (tilt_x + 8.0 * math.sin(t * 1.2 + u * 1.5)) * swell
+                    vz = (tilt_z + 6.0 * math.cos(t * 1.0 + u * 1.1)) * swell
+
+                    # 上扬：足够高，且随水幕浪头略变化
+                    vy = clamp_vy((20.0 + 8.0 * swell) + 0.06 * (abs(vx) + abs(vz)))
+
+                    fire((px, Y_SHIFT, pz), (vx, vy, vz), T.nothing, col)
+
+                # 偶尔加入“水花闪点”（很少，不会盖住彩虹帘）
+                if (k % 7 == 0) and (i % 5 == 0):
+                    vx = (tilt_x * 0.6) + 10.0 * math.sin(t + i)
+                    vz = (tilt_z * 0.6) + 10.0 * math.cos(t + i * 0.7)
+                    vy = clamp_vy(30.0 + 4.0 * swell)
+
+                    splash_type = [T.circle, T.ball, T.random_color][(k + i) % 3]
+                    # 水花用偏白的彩色高光（更像折射）
+                    splash_col = (min(255, col[0] + 60), min(255, col[1] + 60), min(255, col[2] + 60))
+                    fire((px, Y_SHIFT, pz), (vx, vy, vz), splash_type, splash_col)
+
+            time.sleep(dt)
+
+        time.sleep(0.25)
+
+        # -------------------------
+        # Phase 2：瀑布“顶冠”爆闪（把画面推到最大）
+        # 在瀑布顶部打一圈彩虹爆闪，让观众觉得“瀑布是从天穹倾泻”
+        # -------------------------
+        crown = int(round(70 * intensity))
+        crown = max(50, crown)
+
+        for i in range(crown):
+            u = (i / max(1, crown - 1)) * 2.0 - 1.0
+            px = u * (WIDTH * 0.52)
+            pz = TOP_Z + 18.0 + 8.0 * math.sin(u * 3.0)
+
+            # 爆闪向外扩散但不旋涡
+            vx = 14.0 * u
+            vz = 10.0 * math.sin(u * 2.5)
+            vy = clamp_vy(36.0)
+
+            col = RAINBOW[i % len(RAINBOW)]
+            ftype = [T.double_ball, T.mixed_color_ball, T.planet_random_color, T.half_half_color_ball][i % 4]
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 8 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.30)
+
+
+    def climax_kaleidoscope_rift(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.5
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 伪随机（不依赖 random），每次运行都不同
+        # -------------------------
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # HSV->RGB（0..1）再转 0..255，方便做霓虹渐变
+        # -------------------------
+        def hsv_to_rgb255(h, s, v):
+            h = h % 1.0
+            i = int(h * 6.0)
+            f = h * 6.0 - i
+            p = v * (1.0 - s)
+            q = v * (1.0 - f * s)
+            t = v * (1.0 - (1.0 - f) * s)
+            i = i % 6
+            if i == 0:
+                r, g, b = v, t, p
+            elif i == 1:
+                r, g, b = q, v, p
+            elif i == 2:
+                r, g, b = p, v, t
+            elif i == 3:
+                r, g, b = p, q, v
+            elif i == 4:
+                r, g, b = t, p, v
+            else:
+                r, g, b = v, p, q
+            return (int(r * 255), int(g * 255), int(b * 255))
+
+        # -------------------------
+        # 类型池：万花筒节点爆闪（尽量炫）
+        # -------------------------
+        burst_pool = [
+            T.double_ball,
+            T.mixed_color_ball,
+            T.half_half_color_ball,
+            T.planet_random_color,
+            T.planet_ball,
+            T.random_color,
+            T.circle,
+        ]
+
+        # -------------------------
+        # 画面尺度（很大）
+        # -------------------------
+        R_OUT = 48.0   # 外圈碎片尖端半径
+        R_IN = 18.0    # 内圈裂隙附近半径
+        DEPTH = 26.0   # 前后景深度层
+
+        # 每帧间隔
+        dt = 0.07 / max(0.7, intensity)
+
+        # 总帧数（这一波时长）
+        frames = int(round(20 * intensity))
+        frames = max(20, frames)
+
+        # -------------------------
+        # Phase 0：先点亮“裂隙骨架”（中心裂纹，不旋涡）
+        # -------------------------
+        crack_segs = int(round(6 * intensity))
+        crack_segs = max(8, crack_segs)
+        for i in range(crack_segs):
+            u = i / max(1, crack_segs - 1)
+            # 折线裂纹：不规则、像破碎玻璃
+            px = (-18.0 + 36.0 * u) + 6.0 * math.sin(u * 7.0 + rnd() * 2.0)
+            pz = (8.0 * math.sin(u * 4.0 + 0.7) + 10.0 * math.cos(u * 3.0 + 0.2)) + (rnd() * 2.0 - 1.0) * 2.0
+            vx = (rnd() * 2.0 - 1.0) * 6.0
+            vz = (rnd() * 2.0 - 1.0) * 6.0
+            vy = clamp_vy(20.0 + 6.0 * intensity)
+            # 冷白裂光
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, (245, 250, 255))
+            if i % 5 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # -------------------------
+        # Phase 1：万花筒碎片“翻动”
+        # 关键：每帧改变扇区数量、边界抖动、色相偏移、深度层策略 -> 不重复
+        # -------------------------
+        for f in range(frames):
+            t = f * dt
+
+            # 扇区数量：每帧变化（8~16）
+            shards = 4 + int(rnd() * 9)  # 8..16
+            shards = max(4, min(shards, 16))
+            dth = (2.0 * math.pi) / max(1, shards)
+
+            # 本帧的整体色相偏移（霓虹变奏）
+            hue0 = rnd()
+            sat = 0.85 + 0.12 * rnd()
+            val = 0.85 + 0.12 * rnd()
+
+            # “碎片边界”抖动（让碎片像在裂隙中翻动）
+            jitter = 0.18 + 0.22 * rnd()
+
+            # 每帧控制“纹理密度”：像万花筒内部的玻璃纹
+            ribs = 2 + int(rnd() * 3)  # 2..4
+            rib_pts = int(round((6 + 4 * intensity) * (0.9 + 0.4 * rnd())))
+            rib_pts = max(6, rib_pts)
+
+            # 末端爆闪密度（不要每帧都炸，避免视觉疲劳）
+            flash_this_frame = (f % 3 == 0) or (rnd() < 0.25)
+
+            # 这一帧的前后景策略：交替深度，让画面立体
+            depth_mode = f % 3
+
+            # --- 遍历每个扇区，生成碎片边 + 内部纹理 ---
+            for s in range(shards):
+                th0 = s * dth
+                th1 = (s + 1) * dth
+
+                # 碎片角度轻微“开合”
+                wob0 = (rnd() * 2.0 - 1.0) * jitter
+                wob1 = (rnd() * 2.0 - 1.0) * jitter
+                a0 = th0 + wob0
+                a1 = th1 + wob1
+                amid = 0.5 * (a0 + a1)
+
+                # 深度层：让碎片在前后景错开（3D）
+                if depth_mode == 0:
+                    z_shift = (DEPTH * 0.65) * math.sin(amid * 1.7)
+                elif depth_mode == 1:
+                    z_shift = (DEPTH * 0.65) * math.cos(amid * 1.3)
+                else:
+                    z_shift = (DEPTH * 0.35) * (1.0 if (s % 2 == 0) else -1.0)
+
+                # 本扇区主色（霓虹渐变）
+                col_main = hsv_to_rgb255(hue0 + (s / shards) * 0.55, sat, val)
+                col_edge = hsv_to_rgb255(hue0 + (s / shards) * 0.55 + 0.08, min(1.0, sat + 0.10), min(1.0, val + 0.12))
+
+                # 1) 碎片边（两条边 + 外圈边）
+                edge_pts = int(round((3 + 4 * intensity) * (0.9 + 0.3 * rnd())))
+                edge_pts = max(3, edge_pts)
+
+                # 两条辐射边：从内圈到外圈
+                for i in range(edge_pts):
+                    u = i / max(1, edge_pts - 1)
+                    r = R_IN + (R_OUT - R_IN) * u
+
+                    # 边 A
+                    px = r * math.cos(a0)
+                    pz = r * math.sin(a0) + z_shift
+                    vx = 10.0 * math.cos(a0) + 4.0 * (rnd() * 2.0 - 1.0)
+                    vz = 10.0 * math.sin(a0) + 4.0 * (rnd() * 2.0 - 1.0)
+                    vy = clamp_vy(18.0 + 10.0 * intensity)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col_edge)
+
+                    # 边 B
+                    px = r * math.cos(a1)
+                    pz = r * math.sin(a1) - z_shift * 0.7
+                    vx = 10.0 * math.cos(a1) + 4.0 * (rnd() * 2.0 - 1.0)
+                    vz = 10.0 * math.sin(a1) + 4.0 * (rnd() * 2.0 - 1.0)
+                    vy = clamp_vy(18.0 + 10.0 * intensity)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col_edge)
+
+                # 外圈边：在 r=R_OUT 一段短弧（让碎片尖端轮廓更清晰）
+                arc_pts = max(3, int(round(4 * intensity)))
+                for i in range(arc_pts):
+                    u = i / max(1, arc_pts - 1)
+                    a = a0 + (a1 - a0) * u
+                    px = R_OUT * math.cos(a)
+                    pz = R_OUT * math.sin(a) + z_shift * 0.35
+                    vx = 6.0 * math.cos(a) + 2.0 * (rnd() * 2.0 - 1.0)
+                    vz = 6.0 * math.sin(a) + 2.0 * (rnd() * 2.0 - 1.0)
+                    vy = clamp_vy(16.0 + 8.0 * intensity)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col_main)
+
+                # 2) 碎片内部“光栅纹理”（像玻璃折射纹）
+                for rib in range(ribs):
+                    # rib 在扇区内不同半径处
+                    rr = R_IN + (R_OUT - R_IN) * (0.25 + 0.55 * rnd())
+                    # rib 倾斜：让每帧都不一样
+                    skew = (rnd() * 2.0 - 1.0) * 0.45
+
+                    for p_i in range(rib_pts):
+                        u = p_i / max(1, rib_pts - 1)
+                        # 在扇区内插值取角度（稍带 skew）
+                        a = (a0 + (a1 - a0) * u) + skew * (u - 0.5)
+                        px = rr * math.cos(a)
+                        pz = rr * math.sin(a) + z_shift * (0.2 + 0.6 * rnd())
+
+                        # 纹理速度：轻微向外推开（不绕圈）
+                        vx = 8.0 * math.cos(a) + 3.0 * (rnd() * 2.0 - 1.0)
+                        vz = 8.0 * math.sin(a) + 3.0 * (rnd() * 2.0 - 1.0)
+                        vy = clamp_vy(16.0 + 8.0 * intensity)
+
+                        # 内纹比边略暗一点
+                        col_in = hsv_to_rgb255(hue0 + (s / shards) * 0.55 + 0.03 * rib, sat * 0.92, val * 0.85)
+                        fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col_in)
+
+                # 3) “节点爆闪”：碎片尖端/中段偶尔炸一下，形成万花筒的“宝石”感
+                if flash_this_frame and ((s + f) % 2 == 0):
+                    # 尖端节点
+                    px = R_OUT * math.cos(amid)
+                    pz = R_OUT * math.sin(amid) + z_shift * 0.35
+
+                    # 放射爆闪（不旋涡）
+                    rad = 14.0 + 10.0 * rnd()
+                    vx = rad * math.cos(amid) + (rnd() * 2.0 - 1.0) * 4.0
+                    vz = rad * math.sin(amid) + (rnd() * 2.0 - 1.0) * 6.0
+                    vy = clamp_vy(34.0 + 6.0 * intensity)
+
+                    ftype = burst_pool[(s + f) % len(burst_pool)]
+                    # 节点更亮更宝石
+                    col_b = hsv_to_rgb255(hue0 + (s / shards) * 0.55, min(1.0, sat + 0.08), 1.0)
+                    fire((px, 0.0, pz), (vx, vy, vz), ftype, col_b)
+
+            # 中心裂隙“闪白一下”：每隔几帧给观众一个“裂缝在呼吸”的感觉
+            if f % 4 == 0:
+                flashes = int(round(10 * intensity))
+                flashes = max(8, flashes)
+                for i in range(flashes):
+                    a = (2.0 * math.pi) * (i / flashes) + (rnd() - 0.5) * 0.6
+                    vx = 12.0 * math.cos(a)
+                    vz = 12.0 * math.sin(a)
+                    vy = clamp_vy(30.0)
+                    fire((0.0, 0.0, 0.0), (vx, vy, vz), T.circle, (255, 250, 245))
+
+            time.sleep(dt)
+
+        # -------------------------
+        # Phase 2：终章 “Rift Bloom” —— 裂隙爆开彩虹晶体雨（超大收束）
+        # -------------------------
+        finale = int(round(120 * intensity))
+        finale = max(70, finale)
+        for i in range(finale):
+            u = (i / max(1, finale - 1)) * 2.0 - 1.0
+            # 以裂隙为中心向两侧扩张
+            px = u * 54.0 + 6.0 * math.sin(i * 0.15)
+            pz = 10.0 * math.sin(u * 3.0) + (rnd() * 2.0 - 1.0) * 10.0
+
+            # 速度：像晶体雨“喷射扩散”
+            vx = 16.0 * u + (rnd() * 2.0 - 1.0) * 6.0
+            vz = 10.0 * math.sin(u * 2.2) + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(38.0 + 8.0 * rnd() + 4.0 * intensity)
+
+            ftype = burst_pool[i % len(burst_pool)]
+            col = hsv_to_rgb255((i / finale) + 0.15, 0.95, 1.0)
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 8 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+    def climax_phoenix_rise(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 1
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 伪随机（不依赖 random）
+        # -------------------------
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 凤凰火焰调色板（橙红金白）
+        # -------------------------
+        EMBER = (255, 80, 40)          # 炽红
+        ORANGE = (255, 140, 60)        # 橙
+        GOLD = (255, 220, 110)         # 金
+        WHITEGOLD = (255, 245, 220)    # 白金高光
+        MAGENTA = (255, 80, 170)       # 霞色点缀（少量）
+        SMOKE = (60, 40, 30)           # 暗烟（用于轮廓阴影）
+
+        # 主体爆炸类型池（不依赖 flower/love）
+        burst_pool = [
+            T.double_ball,
+            T.mixed_color_ball,
+            T.half_half_color_ball,
+            T.planet_random_color,
+            T.planet_ball,
+            T.random_color,
+            T.circle,
+            T.ball,
+            T.ball_up
+        ]
+
+        # -------------------------
+        # 舞台尺度（大）
+        # -------------------------
+        WING_SPAN = 62.0     # 翼展
+        HEIGHT_BIAS = 26.0   # 轮廓上扬高度基准
+        DEPTH = 26.0         # 前后景层次
+
+        # -------------------------
+        # 辅助：凤凰翼轮廓曲线（半边），返回 (x,z) 的形状点
+        # 说明：这是“具象轮廓”，不是旋涡。
+        # u: 0..1 从身体到翼尖
+        # side: -1 左翼, +1 右翼
+        # -------------------------
+        def wing_shape(u, side):
+            # x：先缓慢展开，后段迅速拉长到翼尖
+            x = side * ( (u ** 0.85) * (WING_SPAN * 0.5) )
+            # z：翼是“上拱 + 羽尖下探”的形状（像鸟翼）
+            z = (18.0 * math.sin(math.pi * u)) - (10.0 * (u ** 1.8))
+            # 加少量“羽片参差”
+            z += 2.6 * math.sin(8.0 * math.pi * u + (0.6 if side > 0 else -0.6))
+            return x, z
+
+        # -------------------------
+        # 辅助：凤凰身体/尾羽曲线
+        # u: 0..1，从下到上
+        # -------------------------
+        def body_shape(u):
+            # 身体中心线在 x=0 附近，稍微有摆动
+            x = 1.6 * math.sin(2.0 * math.pi * u)
+            # 尾部更低，上半更高
+            z = -24.0 + 54.0 * u - 6.0 * (u ** 2)
+            return x, z
+
+        # =========================
+        # Phase 1：火羽散落（铺场：大量 ember 羽毛从两侧与下方飞起）
+        # =========================
+        feather_ticks = int(round(30 * intensity))
+        feather_ticks = max(24, feather_ticks)
+
+        for k in range(feather_ticks):
+            t = k / max(1, feather_ticks - 1)
+            # 每拍发射数量（很壮观）
+            n = int(round((10 + 10 * intensity) * (0.7 + 0.6 * rnd())))
+            n = max(10, n)
+
+            for i in range(n):
+                # 起点：两侧与底部的“火堆”区域
+                pick = i % 3
+                if pick == 0:
+                    px = -30.0 + (rnd() * 2.0 - 1.0) * 8.0
+                    pz = -34.0 + (rnd() * 2.0 - 1.0) * 6.0
+                elif pick == 1:
+                    px = 30.0 + (rnd() * 2.0 - 1.0) * 8.0
+                    pz = -34.0 + (rnd() * 2.0 - 1.0) * 6.0
+                else:
+                    px = (rnd() * 2.0 - 1.0) * 18.0
+                    pz = -40.0 + (rnd() * 2.0 - 1.0) * 4.0
+
+                # 速度：向上为主，带一点向中心收拢（像火羽被吸起）
+                pull = (1.0 - t)
+                vx = (-px * 0.18) + (rnd() * 2.0 - 1.0) * 6.0
+                vz = (-pz * 0.08) + (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(18.0 + 10.0 * intensity + 10.0 * pull)
+
+                # 色彩：橙红为主，少量金白/粉霞
+                rsel = rnd()
+                if rsel < 0.60:
+                    col = EMBER
+                elif rsel < 0.85:
+                    col = ORANGE
+                elif rsel < 0.95:
+                    col = GOLD
+                else:
+                    col = MAGENTA
+
+                # 主体用 nothing 做“羽毛光轨”，偶尔用 ball_up 做火舌
+                ftype = T.ball_up if (i % 11 == 0 and k > feather_ticks * 0.3) else T.nothing
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 8 == 0:
+                    time.sleep(0.003)
+
+            time.sleep(0.06)
+
+        time.sleep(0.20)
+
+        # =========================
+        # Phase 2：凤凰轮廓显形（身体 + 双翼分层展开）
+        # - 用 T.nothing 画出轮廓线
+        # - 关键羽尖节点用少量爆闪点亮（非常华丽）
+        # =========================
+        outline_steps = int(round(44 * intensity))
+        outline_steps = max(36, outline_steps)
+
+        # 2A) 身体与尾羽（中心竖向骨架）
+        for s in range(outline_steps):
+            u = s / max(1, outline_steps - 1)
+            x, z = body_shape(u)
+
+            # 深度错层：让身体也有“立体骨架”
+            depth = (DEPTH * 0.25) * math.sin(u * math.pi)
+
+            # 身体几乎竖直，上扬明显
+            vx = 0.6 * math.sin(u * 8.0)
+            vz = 0.6 * math.cos(u * 7.0)
+            vy = clamp_vy(24.0 + 18.0 * u + 6.0 * intensity)
+
+            # 颜色：下部偏暗烟，向上逐渐金白
+            if u < 0.25:
+                col = SMOKE
+            elif u < 0.70:
+                col = ORANGE
+            else:
+                col = GOLD if (s % 3 != 0) else WHITEGOLD
+
+            fire((x, 0.0, z + depth), (vx, vy, vz), T.nothing, col)
+
+            # 尾部加一点“尾羽丝”
+            if u < 0.35 and (s % 2 == 0):
+                for tail in range(3):
+                    side = -1.0 if tail % 2 == 0 else 1.0
+                    px = x + side * (2.0 + 1.2 * tail)
+                    pz = z - 6.0 - 4.0 * tail
+                    vx2 = side * (6.0 + 2.0 * tail)
+                    vz2 = 2.0 * math.sin(s * 0.4 + tail)
+                    vy2 = clamp_vy(20.0 + 3.0 * tail)
+                    fire((px, 0.0, pz), (vx2, vy2, vz2), T.nothing, EMBER)
+
+            time.sleep(0.02)
+
+        time.sleep(0.18)
+
+        # 2B) 双翼展开（多层羽片：外轮廓 + 内羽脉）
+        wing_layers = 3  # 层数越多越华丽
+        wing_pts = int(round(42 * intensity))
+        wing_pts = max(34, wing_pts)
+
+        for layer in range(wing_layers):
+            layer_scale = 1.0 - 0.13 * layer
+            layer_depth = (layer - (wing_layers - 1) / 2.0) * (DEPTH * 0.28)
+
+            for s in range(wing_pts):
+                u = s / max(1, wing_pts - 1)
+
+                for side in (-1.0, 1.0):
+                    wx, wz = wing_shape(u, side)
+                    wx *= layer_scale
+                    wz *= (0.95 + 0.08 * layer)
+
+                    # 翼的起点与身体连接：整体上移一些
+                    px = wx
+                    pz = wz + HEIGHT_BIAS + layer_depth + 2.0 * math.sin(u * 2.2 + layer)
+
+                    # 速度：让线条“显形”——沿翼方向外推，且上扬
+                    # 不用旋转，直接用几何切线
+                    # 近似切线：用相邻差分
+                    u2 = min(1.0, u + 0.01)
+                    wx2, wz2 = wing_shape(u2, side)
+                    tx = (wx2 - wx) * 80.0
+                    tz = (wz2 - wz) * 80.0
+
+                    vx = tx * 0.35 + side * (3.0 + 2.0 * layer)
+                    vz = tz * 0.20 + 2.0 * math.sin(u * 6.0 + layer)
+                    vy = clamp_vy(26.0 + 10.0 * intensity + 10.0 * (1.0 - u))
+
+                    # 颜色：内层偏橙，外轮廓偏金白高光
+                    if layer == 0 and (s % 5 == 0):
+                        col = WHITEGOLD
+                    elif (s + layer) % 4 == 0:
+                        col = GOLD
+                    else:
+                        col = ORANGE
+
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 羽尖节点爆闪：只在外层、翼尖区域，少量但非常点睛
+                    if layer == 0 and u > 0.72 and (s % 6 == 0):
+                        bx = px
+                        bz = pz
+                        # 爆闪向外扩散（不旋涡）
+                        rad = 18.0 + 10.0 * rnd()
+                        bvx = side * rad * (0.75 + 0.2 * rnd())
+                        bvz = (rnd() * 2.0 - 1.0) * 10.0
+                        bvy = clamp_vy(36.0 + 6.0 * intensity)
+
+                        ftype = burst_pool[(s + layer) % len(burst_pool)]
+                        bcol = GOLD if (s % 12 != 0) else WHITEGOLD
+                        fire((bx, 0.0, bz), (bvx, bvy, bvz), ftype, bcol)
+
+                if s % 7 == 0:
+                    time.sleep(0.005)
+
+            time.sleep(0.10)
+
+        time.sleep(0.25)
+
+        # =========================
+        # Phase 3：涅槃金核（胸口一次“金核爆” + 全翼二次点亮）
+        # =========================
+        # 3A) 胸口金核：位置在身体上部偏中
+        core_x, core_z = (0.0, HEIGHT_BIAS + 16.0)
+
+        core_bursts = int(round(90 * intensity))  # 很大很炸
+        core_bursts = max(70, core_bursts)
+        for i in range(core_bursts):
+            th = (2.0 * math.pi) * (i / core_bursts)
+            rad = 16.0 + 18.0 * rnd()
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 4.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 8.0
+            vy = clamp_vy(42.0 + 8.0 * rnd() + 6.0 * intensity)
+
+            ftype = burst_pool[i % len(burst_pool)]
+            col = WHITEGOLD if i % 3 == 0 else GOLD
+            fire((core_x, 0.0, core_z), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.15)
+
+        # 3B) 全翼二次点亮：沿翼面撒一层“金粉”
+        glow_sweeps = int(round(16 * intensity))
+        glow_sweeps = max(12, glow_sweeps)
+
+        for k in range(glow_sweeps):
+            u = k / max(1, glow_sweeps - 1)
+            # 从内到外扫一遍
+            for side in (-1.0, 1.0):
+                wx, wz = wing_shape(0.20 + 0.75 * u, side)
+                px = wx
+                pz = wz + HEIGHT_BIAS + 6.0 * math.sin(k * 0.4)
+
+                vx = side * (10.0 + 12.0 * u)
+                vz = 6.0 * math.cos(k * 0.6)
+                vy = clamp_vy(34.0 + 6.0 * intensity)
+
+                # 这层用 circle/random_color 少量点亮即可
+                ftype = T.circle if (k % 2 == 0) else T.random_color
+                col = GOLD if (k % 3 != 0) else WHITEGOLD
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            time.sleep(0.06)
+
+        time.sleep(0.25)
+
+
+
+    def climax_rose_window(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.5, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 伪随机（不依赖 random）
+        # -------------------------
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 彩窗调色板（典型彩绘玻璃：宝石色 + 金白高光 + 铅条暗色）
+        # -------------------------
+        LEAD = (25, 25, 35)          # 铅条暗色
+        LEAD_HI = (60, 60, 80)       # 铅条高光（少量）
+        GOLD = (255, 220, 120)       # 金边
+        WHITE = (255, 245, 230)      # 圣光
+
+        RUBY = (255, 60, 90)
+        AMBER = (255, 140, 60)
+        TOPAZ = (255, 210, 90)
+        EMERALD = (60, 220, 130)
+        CYAN = (60, 200, 255)
+        SAPPHIRE = (80, 120, 255)
+        AMETHYST = (190, 90, 255)
+        WHITEGOLD = (255, 245, 220)
+
+        GLASS = [RUBY, AMBER, TOPAZ, EMERALD, CYAN, SAPPHIRE, AMETHYST]
+
+        # -------------------------
+        # 类型池：彩窗宝石节点爆闪（少量）
+        # -------------------------
+        gem_pool = [
+            T.mixed_color_ball,
+            T.half_half_color_ball,
+            T.double_ball,
+            T.planet_ball,
+            T.planet_random_color,
+            T.circle
+        ]
+
+        # -------------------------
+        # 玫瑰窗尺度（很大）
+        # -------------------------
+        R_OUT = 58.0
+        R_MID = 38.0
+        R_IN = 18.0
+        DEPTH = 22.0   # 前后景层次（让彩窗更立体）
+
+        # 花瓣数量（典型玫瑰窗 12~16）
+        petals = int(round(12 + 4 * (rnd())))  # 12..16
+        petals = max(12, min(petals, 16))
+
+        # 肋骨数量（放射铅条）
+        ribs = petals * 2
+
+        # 密度
+        ring_pts = int(round(60 * intensity))
+        ring_pts = max(44, ring_pts)
+
+        # -------------------------
+        # 工具：在角度 a、半径 r 上取点并附加深度起伏
+        # -------------------------
+        def point_on_ring(r, a, depth_mode):
+            # depth_mode: 0/1/2 让不同结构在不同前后景
+            if depth_mode == 0:
+                dz = (DEPTH * 0.55) * math.sin(a * 1.7)
+            elif depth_mode == 1:
+                dz = (DEPTH * 0.55) * math.cos(a * 1.3)
+            else:
+                dz = (DEPTH * 0.25) * (1.0 if int(a * 10) % 2 == 0 else -1.0)
+            return (r * math.cos(a), r * math.sin(a) + dz)
+
+        # ==========================================================
+        # Phase 0：先出“铅条骨架”（三圈 + 肋骨），让形状一眼看懂
+        # ==========================================================
+        rings = [R_IN, R_MID, R_OUT]
+        for ri, r in enumerate(rings):
+            for i in range(ring_pts):
+                a = (2.0 * math.pi) * (i / ring_pts)
+                px, pz = point_on_ring(r, a, ri % 3)
+
+                # 铅条：几乎径向轻推 + 上扬
+                vx = 6.0 * math.cos(a) + (rnd() * 2.0 - 1.0) * 1.5
+                vz = 6.0 * math.sin(a) + (rnd() * 2.0 - 1.0) * 1.5
+                vy = clamp_vy(18.0 + 6.0 * intensity)
+
+                col = LEAD_HI if (i % 11 == 0) else LEAD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 10 == 0:
+                    time.sleep(0.004)
+            time.sleep(0.03)
+
+        # 放射肋骨（从内到外的铅条）
+        rib_steps = int(round(18 * intensity))
+        rib_steps = max(14, rib_steps)
+
+        for r_i in range(ribs):
+            a = (2.0 * math.pi) * (r_i / ribs)
+            for s in range(rib_steps):
+                u = s / max(1, rib_steps - 1)
+                r = R_IN + (R_OUT - R_IN) * u
+                px, pz = point_on_ring(r, a, 2)
+
+                vx = 7.0 * math.cos(a)
+                vz = 7.0 * math.sin(a)
+                vy = clamp_vy(18.0 + 6.0 * intensity)
+
+                col = LEAD_HI if (s % 5 == 0 and r_i % 3 == 0) else LEAD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            if r_i % 3 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：花瓣彩玻填充（扇区彩片 + 金边高光）
+        # ==========================================================
+        # 每个花瓣是一个扇区：在 R_MID~R_OUT 区域填“彩玻碎片纹”
+        sector_pts = int(round(22 * intensity))
+        sector_pts = max(18, sector_pts)
+
+        sector_ribs = int(round(6 * intensity))
+        sector_ribs = max(5, sector_ribs)
+
+        dth = (2.0 * math.pi) / petals
+
+        for p in range(petals):
+            a0 = p * dth
+            a1 = (p + 1) * dth
+            amid = 0.5 * (a0 + a1)
+
+            # 本花瓣主色：宝石色轮换
+            base = GLASS[p % len(GLASS)]
+            alt = GLASS[(p + 3) % len(GLASS)]
+
+            # 1) 花瓣边（金边高光）
+            edgeN = int(round(16 * intensity))
+            edgeN = max(12, edgeN)
+            for i in range(edgeN):
+                u = i / max(1, edgeN - 1)
+                a = a0 + (a1 - a0) * u
+                px, pz = point_on_ring(R_OUT, a, 0)
+
+                vx = 8.0 * math.cos(a)
+                vz = 8.0 * math.sin(a)
+                vy = clamp_vy(20.0 + 8.0 * intensity)
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, GOLD)
+
+                if i % 6 == 0:
+                    time.sleep(0.003)
+
+            # 2) 花瓣内部“彩玻碎片纹理”（多条短弧 + 短径向线）
+            for rib in range(sector_ribs):
+                rr = R_MID + (R_OUT - R_MID) * (0.18 + 0.70 * rnd())
+                skew = (rnd() * 2.0 - 1.0) * 0.25
+
+                for i in range(sector_pts):
+                    u = i / max(1, sector_pts - 1)
+                    a = a0 + (a1 - a0) * u + skew * (u - 0.5)
+
+                    px, pz = point_on_ring(rr, a, 1)
+
+                    # 彩玻的“光泽”：轻推 + 上扬
+                    vx = 7.0 * math.cos(a) + (rnd() * 2.0 - 1.0) * 2.0
+                    vz = 7.0 * math.sin(a) + (rnd() * 2.0 - 1.0) * 2.0
+                    vy = clamp_vy(18.0 + 8.0 * intensity)
+
+                    # 同花瓣内两色交织，像彩窗拼片
+                    col = base if ((i + rib) % 2 == 0) else alt
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    if i % 7 == 0:
+                        time.sleep(0.003)
+
+            # 3) 花瓣“宝石节点”爆闪（很少但非常华丽）
+            if p % 2 == 0:
+                node_r = R_MID + (R_OUT - R_MID) * 0.78
+                px, pz = point_on_ring(node_r, amid, 0)
+                rad = 16.0 + 10.0 * rnd()
+                vx = rad * math.cos(amid)
+                vz = rad * math.sin(amid)
+                vy = clamp_vy(36.0 + 6.0 * intensity)
+                ftype = gem_pool[p % len(gem_pool)]
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, WHITE)
+                time.sleep(0.02)
+
+            time.sleep(0.03)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 2：中心玫瑰芯（内圈花瓣 + 十字光）
+        # ==========================================================
+        core_petals = int(round(8 + 2 * rnd()))  # 8~10
+        core_petals = max(8, min(core_petals, 10))
+        core_dth = (2.0 * math.pi) / core_petals
+
+        core_pts = int(round(20 * intensity))
+        core_pts = max(16, core_pts)
+
+        for p in range(core_petals):
+            a0 = p * core_dth
+            a1 = (p + 1) * core_dth
+            amid = 0.5 * (a0 + a1)
+
+            col = GLASS[(p + 1) % len(GLASS)]
+            for i in range(core_pts):
+                u = i / max(1, core_pts - 1)
+                # 内芯像花朵：半径在 R_IN 附近起伏
+                r = R_IN * (0.55 + 0.35 * math.sin(u * math.pi))
+                a = a0 + (a1 - a0) * u
+                px, pz = point_on_ring(r, a, 2)
+
+                vx = 6.0 * math.cos(a)
+                vz = 6.0 * math.sin(a)
+                vy = clamp_vy(18.0 + 8.0 * intensity)
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            # 内芯节点爆闪（更集中）
+            if p % 3 == 0:
+                rad = 14.0 + 8.0 * rnd()
+                vx = rad * math.cos(amid)
+                vz = rad * math.sin(amid)
+                vy = clamp_vy(34.0 + 6.0 * intensity)
+                ftype = gem_pool[(p + 2) % len(gem_pool)]
+                fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, WHITEGOLD)
+
+            time.sleep(0.03)
+
+        # 十字光（教堂感）：水平/竖直两道“圣光”
+        cross_len = 26.0
+        cross_pts = int(round(18 * intensity))
+        cross_pts = max(14, cross_pts)
+        for i in range(cross_pts):
+            u = (i / max(1, cross_pts - 1)) * 2.0 - 1.0
+            # 横
+            fire((u * cross_len, 0.0, 0.0), (6.0 * u, clamp_vy(28.0), 0.0), T.nothing, WHITE)
+            # 竖（用 z 当“竖向”在你的平面里）
+            fire((0.0, 0.0, u * cross_len), (0.0, clamp_vy(28.0), 6.0 * u), T.nothing, WHITE)
+            time.sleep(0.01)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 3：终章“整窗通电”（外圈宝石雨 + 金白圣辉）
+        # ==========================================================
+        finale = int(round(120 * intensity))
+        finale = max(90, finale)
+
+        for i in range(finale):
+            a = (2.0 * math.pi) * (i / finale)
+            # 从外圈一圈打出“宝石雨”
+            px, pz = point_on_ring(R_OUT, a, 0)
+
+            rad = 18.0 + 14.0 * rnd()
+            vx = rad * math.cos(a) + (rnd() * 2.0 - 1.0) * 4.0
+            vz = rad * math.sin(a) + (rnd() * 2.0 - 1.0) * 6.0
+            vy = clamp_vy(40.0 + 8.0 * rnd() + 6.0 * intensity)
+
+            ftype = gem_pool[i % len(gem_pool)]
+            # 颜色：宝石色 + 金白高光交替
+            if i % 5 == 0:
+                col = WHITEGOLD
+            elif i % 3 == 0:
+                col = GOLD
+            else:
+                col = GLASS[i % len(GLASS)]
+
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+    def climax_confetti_hurricane(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.5, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 伪随机（不依赖 random）
+        # -------------------------
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 彩纸调色板（霓虹派对感）
+        # 每个彩纸有“正面色”和“背面色”（翻面用）
+        # -------------------------
+        PAIRS = [
+            ((255, 60, 120), (120, 30, 70)),     # 霓虹粉 <-> 暗粉
+            ((60, 220, 255), (20, 90, 120)),     # 青蓝 <-> 深青
+            ((255, 220, 80), (130, 90, 20)),     # 金黄 <-> 暗金
+            ((120, 255, 120), (40, 120, 60)),    # 荧光绿 <-> 深绿
+            ((190, 90, 255), (90, 40, 120)),     # 紫 <-> 深紫
+            ((255, 140, 60), (120, 60, 20)),     # 橙 <-> 暗橙
+            ((255, 245, 230), (120, 120, 120)),  # 白亮片 <-> 灰背面
+        ]
+
+        # 终章亮片爆闪类型（少量即可很华丽）
+        glitter_pool = [
+            T.mixed_color_ball, T.double_ball, T.planet_random_color, T.half_half_color_ball, T.circle
+        ]
+
+        # -------------------------
+        # 场景尺度（满屏）
+        # -------------------------
+        WIDTH = 86.0     # x 覆盖范围
+        DEPTH = 54.0     # z 覆盖范围
+        SIDE_X = 52.0    # 侧面入口
+        FAR_Z = 38.0     # 远处入口（给纵深）
+
+        # 密度/节奏
+        dt = 0.055 / max(0.7, intensity)
+        ticks = int(round(150 * intensity))   # 约 150*0.055 = 8.25s（intensity=1）
+        ticks = max(110, ticks)
+
+        # 每拍彩纸数量（很壮观，但仍可控）
+        per_tick = int(round(14 + 18 * intensity))
+        per_tick = max(16, per_tick)
+
+        # “翻面频率”：越小越频繁翻面
+        flip_period = max(4, int(round(7 / max(0.7, intensity))))
+
+        # -------------------------
+        # 风场：不是固定旋转，而是“阵风脉冲 + 剪切 + 上升热流”
+        # -------------------------
+        def wind_field(t, u):
+            # u 是空间采样参数（-1..1），让不同位置风略不同
+            gust = 0.65 + 0.55 * math.sin(t * 0.9) + 0.25 * math.sin(t * 2.1)
+            shear = 0.35 * math.sin(t * 0.6 + u * 2.5)
+
+            wx = (22.0 * gust) + (14.0 * shear)
+            wz = (10.0 * math.cos(t * 0.7) - 8.0 * math.sin(t * 1.1 + u))
+
+            # 上升热流（一直>0）
+            up = 20.0 + 8.0 * gust + 6.0 * math.sin(t * 1.3 + u)
+            return wx, wz, up
+
+        # -------------------------
+        # “纸片片段”生成：用 2~3 条 very short 的 T.nothing 形成“片状闪烁”
+        # -------------------------
+        def emit_confetti_sheet(px, pz, vx, vy, vz, pair_idx, flip):
+            front, back = PAIRS[pair_idx % len(PAIRS)]
+            col = front if flip else back
+
+            # 用小偏移的多条轨迹模拟“纸片边缘”
+            # 偏移方向随机一点，但幅度小 -> 像一片在翻
+            ox = (rnd() * 2.0 - 1.0) * 0.9
+            oz = (rnd() * 2.0 - 1.0) * 0.9
+
+            # 纸片“翻面抖动”：让速度在很小范围内抖一下
+            jx = (rnd() * 2.0 - 1.0) * 3.0
+            jz = (rnd() * 2.0 - 1.0) * 3.0
+
+            # 2~3 条线段，视觉更像片状，不是单点
+            fire((px, 0.0, pz), (vx + jx, clamp_vy(vy), vz + jz), T.nothing, col)
+            fire((px + ox, 0.0, pz + oz), (vx - jx * 0.6, clamp_vy(vy + 1.2), vz - jz * 0.6), T.nothing, col)
+
+            if (pair_idx + int(px) + int(pz)) % 3 == 0:
+                fire((px - ox * 0.7, 0.0, pz - oz * 0.7),
+                    (vx + jx * 0.3, clamp_vy(vy + 0.6), vz + jz * 0.3),
+                    T.nothing, col)
+
+        # ==========================================================
+        # Phase 1：风暴建立（从两侧 + 远处大量卷入）
+        # ==========================================================
+        for k in range(ticks):
+            t = k * dt
+
+            # 每拍翻面状态（整片风暴同步有节奏地“闪一下”）
+            flip = (k // flip_period) % 2 == 0
+
+            # 阵风方向轻微改变（左右交替“拍打”）
+            sway = math.sin(t * 0.8)  # -1..1
+
+            for i in range(per_tick):
+                # 入口选择：左/右/远处底边（让风暴更立体）
+                sel = i % 3
+                u = (i / max(1, per_tick - 1)) * 2.0 - 1.0  # -1..1
+
+                if sel == 0:
+                    # 左侧卷入
+                    px = -SIDE_X + (rnd() * 2.0 - 1.0) * 4.0
+                    pz = (rnd() * 2.0 - 1.0) * (DEPTH * 0.5)
+                elif sel == 1:
+                    # 右侧卷入
+                    px = SIDE_X + (rnd() * 2.0 - 1.0) * 4.0
+                    pz = (rnd() * 2.0 - 1.0) * (DEPTH * 0.5)
+                else:
+                    # 远处卷入（制造纵深）
+                    px = (rnd() * 2.0 - 1.0) * (WIDTH * 0.5)
+                    pz = FAR_Z + (rnd() * 2.0 - 1.0) * 6.0
+
+                wx, wz, up = wind_field(t, u)
+
+                # 基础速度：风场 + 一点向中心的“拉回”（形成风暴聚集）
+                vx = (wx * (1.0 if sel != 1 else -1.0)) * 0.55 + (-px * 0.10) + 10.0 * sway
+                vz = (wz * 0.70) + (-pz * 0.06) + 6.0 * math.cos(t * 0.9 + u)
+
+                vy = clamp_vy(up + 6.0 * intensity + 0.05 * (abs(vx) + abs(vz)))
+
+                # 纸片配色索引：随空间与时间变化，避免重复块
+                pair_idx = int((k * 3 + i * 7 + (px + 1000)) * 0.37) % len(PAIRS)
+
+                emit_confetti_sheet(px, pz, vx, vy, vz, pair_idx, flip)
+
+                if i % 10 == 0:
+                    time.sleep(0.002)
+
+            # 偶尔来一发“彩纸爆散点”让观众更嗨（很少）
+            if k % int(max(6, round(9 / max(0.7, intensity)))) == 0:
+                # 在中心上方区域打一小团亮片感
+                col = PAIRS[k % len(PAIRS)][0]
+                vx = (rnd() * 2.0 - 1.0) * 18.0
+                vz = (rnd() * 2.0 - 1.0) * 18.0
+                vy = clamp_vy(34.0 + 6.0 * intensity)
+                fire((0.0, 0.0, 10.0 * math.sin(t)), (vx, vy, vz), T.circle, col)
+
+            time.sleep(dt)
+
+        time.sleep(0.25)
+
+        # ==========================================================
+        # Phase 2：终章——全部变“亮片”爆闪（短而炸）
+        # ==========================================================
+        finale = int(round(90 * intensity))
+        finale = max(70, finale)
+
+        for i in range(finale):
+            a = (2.0 * math.pi) * (i / finale)
+
+            # 在全场分布几个爆点，让“亮片雨”铺满
+            px = (WIDTH * 0.5) * math.cos(a) + (rnd() * 2.0 - 1.0) * 12.0
+            pz = (DEPTH * 0.5) * math.sin(a) + (rnd() * 2.0 - 1.0) * 12.0
+
+            rad = 18.0 + 16.0 * rnd()
+            vx = rad * math.cos(a) + (rnd() * 2.0 - 1.0) * 6.0
+            vz = rad * math.sin(a) + (rnd() * 2.0 - 1.0) * 8.0
+            vy = clamp_vy(42.0 + 8.0 * rnd() + 6.0 * intensity)
+
+            ftype = glitter_pool[i % len(glitter_pool)]
+            # 终章颜色：大量白金 + 少量霓虹
+            if i % 4 == 0:
+                col = (255, 245, 230)
+            elif i % 4 == 1:
+                col = (255, 220, 120)
+            else:
+                col = PAIRS[i % len(PAIRS)][0]
+
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+
+    def climax_fountain_throne(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.5, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # -------------------------
+        # 伪随机（不依赖 random）
+        # -------------------------
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 配色：王座喷泉（金白为主，青蓝为阴影与水光）
+        # -------------------------
+        GOLD = (255, 220, 120)
+        WHITEGOLD = (255, 245, 230)
+        AQUA = (70, 210, 255)
+        DEEP_AQUA = (40, 140, 210)
+        ROSE = (255, 120, 200)   # 少量点缀（宝石感）
+
+        # 华丽节点类型池（少量）
+        jewel_pool = [
+            T.planet_ball, T.planet_random_color,
+            T.mixed_color_ball, T.half_half_color_ball,
+            T.double_ball, T.circle, T.random_color
+        ]
+
+        # -------------------------
+        # 舞台尺寸（很大）
+        # -------------------------
+        W = 78.0      # 王座宽度
+        D = 36.0      # 纵深
+        X0 = 0.0
+        Z0 = -6.0     # 王座中心稍偏后，显得像“坐在舞台里”
+        ARM_Z = Z0 - 8.0
+        BACK_Z = Z0 + 14.0
+
+        # 柱阵与节奏
+        dt = 0.06 / max(0.7, intensity)
+
+        # 每根柱子喷几根“丝”（越多越像喷泉柱）
+        strands = int(round(3 + 2 * intensity))
+        strands = max(3, strands)
+
+        # ==========================================================
+        # Phase 1：底座喷泉柱阵（地基 + 扶手柱）
+        # ==========================================================
+        base_cols = int(round(14 * intensity))
+        base_cols = max(12, base_cols)
+
+        # 底座：一排宽阔喷泉柱
+        for step in range(int(round(18 * intensity))):
+            swell = 0.75 + 0.45 * math.sin(step * 0.35)  # 呼吸感
+            for i in range(base_cols):
+                u = (i / max(1, base_cols - 1)) * 2.0 - 1.0
+                px = X0 + u * (W * 0.5)
+                pz = Z0 + 0.25 * D * math.sin(u * math.pi)  # 中间略靠前形成“坐垫弧”
+
+                # 速度：几乎竖直上喷 + 少量左右摇摆（水柱质感）
+                vx_base = 4.0 * math.sin(step * 0.25 + u * 2.3)
+                vz_base = 2.5 * math.cos(step * 0.22 + u * 1.8)
+                vy_base = clamp_vy((22.0 + 12.0 * swell) + 6.0 * intensity)
+
+                for s in range(strands):
+                    off = (s - (strands - 1) / 2.0) * 1.6
+                    col = GOLD if (i + s + step) % 3 != 0 else AQUA
+                    fire((px + off, 0.0, pz - off * 0.6),
+                        (vx_base + off * 0.8, vy_base, vz_base - off * 0.5),
+                        T.nothing, col)
+
+                # 柱顶偶尔亮一下（像灯杯）
+                if step % 6 == 0 and i % 4 == 0:
+                    fire((px, 0.0, pz),
+                        (vx_base * 0.6, clamp_vy(34.0), vz_base * 0.6),
+                        T.circle, WHITEGOLD)
+
+            time.sleep(dt)
+
+        time.sleep(0.20)
+
+        # 扶手：左右两条“扶手喷泉轨”，更高更亮
+        arm_pts = int(round(10 * intensity))
+        arm_pts = max(8, arm_pts)
+
+        for step in range(int(round(16 * intensity))):
+            swell = 0.75 + 0.45 * math.sin(0.6 + step * 0.32)
+            for side in (-1.0, 1.0):
+                for i in range(arm_pts):
+                    u = i / max(1, arm_pts - 1)
+                    # 扶手从前到后延伸
+                    px = X0 + side * (W * 0.45 + 2.0 * math.sin(u * math.pi))
+                    pz = ARM_Z + u * (BACK_Z - ARM_Z) + 2.0 * math.sin(u * 2.0 + step * 0.2)
+
+                    vx = (-side * 2.5) + 3.0 * math.sin(step * 0.25 + u * 3.0)
+                    vz = 2.5 * math.cos(step * 0.20 + u * 2.2)
+                    vy = clamp_vy((28.0 + 14.0 * swell) + 6.0 * intensity)
+
+                    for s in range(strands):
+                        off = (s - (strands - 1) / 2.0) * 1.4
+                        col = WHITEGOLD if (step + i + s) % 5 == 0 else DEEP_AQUA
+                        fire((px + off * 0.6, 0.0, pz + off),
+                            (vx + off * 0.5, vy, vz - off * 0.4),
+                            T.nothing, col)
+
+                    if step % 5 == 0 and i % 3 == 0:
+                        fire((px, 0.0, pz),
+                            (vx * 0.6, clamp_vy(38.0), vz * 0.6),
+                            T.ball, GOLD)
+
+            time.sleep(dt)
+
+        time.sleep(0.25)
+
+        # ==========================================================
+        # Phase 2：靠背与拱（王座轮廓最关键：大、对称、像“建筑”）
+        # ==========================================================
+        # 靠背立柱：左右 + 中间几根
+        back_cols = [
+            (-W * 0.38, BACK_Z),
+            (-W * 0.20, BACK_Z + 2.0),
+            (0.0, BACK_Z + 4.0),
+            (W * 0.20, BACK_Z + 2.0),
+            (W * 0.38, BACK_Z),
+        ]
+
+        for step in range(int(round(18 * intensity))):
+            swell = 0.80 + 0.50 * math.sin(step * 0.30)
+            for j, (px, pz) in enumerate(back_cols):
+                # 中心更高，形成“王座背”
+                height_bias = 1.0 + 0.55 * (1.0 - abs(j - (len(back_cols)-1)/2.0) / ((len(back_cols)-1)/2.0))
+                vx = 2.0 * math.sin(step * 0.22 + j)
+                vz = 2.0 * math.cos(step * 0.20 + j)
+                vy = clamp_vy((34.0 + 18.0 * swell) * height_bias + 6.0 * intensity)
+
+                for s in range(strands + 1):
+                    off = (s - (strands) / 2.0) * 1.2
+                    col = GOLD if (j + s + step) % 4 != 0 else WHITEGOLD
+                    fire((px + off, 0.0, pz - off * 0.4),
+                        (vx + off * 0.6, vy, vz - off * 0.3),
+                        T.nothing, col)
+
+                # 柱顶宝石灯
+                if step % 6 == 0:
+                    ftype = jewel_pool[(j + step) % len(jewel_pool)]
+                    col = WHITEGOLD if j == 2 else GOLD
+                    fire((px, 0.0, pz),
+                        (0.0, clamp_vy(44.0), 0.0),
+                        ftype, col)
+
+            time.sleep(dt)
+
+        time.sleep(0.22)
+
+        # 拱：把靠背上沿连起来（像王座的“拱冠”）
+        arch_pts = int(round(42 * intensity))
+        arch_pts = max(34, arch_pts)
+
+        for step in range(int(round(14 * intensity))):
+            for i in range(arch_pts):
+                u = (i / max(1, arch_pts - 1)) * 2.0 - 1.0
+                # 拱形曲线：中间最高
+                px = X0 + u * (W * 0.40)
+                pz = BACK_Z + 8.0 + 8.0 * math.sin((1.0 - abs(u)) * math.pi * 0.5)
+
+                # 上扬速度：构成拱的“光梁”
+                vx = 6.0 * u
+                vz = 3.0 * math.sin(u * 3.0 + step * 0.3)
+                vy = clamp_vy(28.0 + 10.0 * intensity + 6.0 * (1.0 - abs(u)))
+
+                col = WHITEGOLD if (i + step) % 7 == 0 else GOLD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                # 拱梁节点少量炸一下（像彩灯）
+                if step % 4 == 0 and i % 9 == 0:
+                    ftype = jewel_pool[(i + step) % len(jewel_pool)]
+                    jcol = ROSE if (i % 18 == 0) else WHITEGOLD
+                    fire((px, 0.0, pz),
+                        (vx * 0.4, clamp_vy(40.0), vz * 0.4),
+                        ftype, jcol)
+
+                if i % 10 == 0:
+                    time.sleep(0.003)
+
+            time.sleep(0.04)
+
+        time.sleep(0.25)
+
+        # ==========================================================
+        # Phase 3：王冠终爆（中央冠冕 + 两侧翼尖同步）
+        # ==========================================================
+        crown_center = (0.0, BACK_Z + 18.0)
+
+        # 3A) 中央冠冕：多尖角放射（不旋涡，纯放射）
+        crown_spikes = int(round(64 * intensity))
+        crown_spikes = max(50, crown_spikes)
+
+        for i in range(crown_spikes):
+            th = (2.0 * math.pi) * (i / crown_spikes)
+            # 做“尖角感”：让半径有周期性起伏
+            rad = 18.0 + 10.0 * (0.5 + 0.5 * math.sin(6.0 * th)) + 8.0 * rnd()
+
+            vx = math.cos(th) * rad
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vy = clamp_vy(46.0 + 8.0 * rnd() + 6.0 * intensity)
+
+            ftype = jewel_pool[i % len(jewel_pool)]
+            col = WHITEGOLD if i % 3 == 0 else GOLD
+            fire((crown_center[0], 0.0, crown_center[1]), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.15)
+
+        # 3B) 两侧“王座翼尖”同步爆闪（让画面更宽、更大）
+        wing_bursts = int(round(36 * intensity))
+        wing_bursts = max(28, wing_bursts)
+
+        for i in range(wing_bursts):
+            side = -1.0 if i % 2 == 0 else 1.0
+            px = side * (W * 0.48)
+            pz = BACK_Z + 10.0 + 4.0 * math.sin(i * 0.4)
+
+            th = (2.0 * math.pi) * (i / wing_bursts)
+            rad = 16.0 + 10.0 * rnd()
+
+            vx = -side * (10.0 + 8.0 * rnd())  # 向内喷
+            vz = math.sin(th) * rad
+            vy = clamp_vy(42.0 + 6.0 * intensity)
+
+            ftype = [T.double_ball, T.mixed_color_ball, T.planet_random_color, T.circle][i % 4]
+            col = AQUA if i % 3 == 0 else GOLD
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 8 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+    def climax_cloud_sea_gate(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.5, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            return float(v if v > MIN_VY else MIN_VY)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # --- 伪随机（不依赖 random）---
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # --- 配色：云（乳白/冷白/淡紫/银灰）+ 星海（金白/群青/青蓝）---
+        CLOUD_A = (245, 248, 255)
+        CLOUD_B = (220, 235, 255)
+        CLOUD_C = (235, 220, 255)
+        CLOUD_D = (170, 185, 210)
+        EDGE_GOLD = (255, 230, 150)
+        EDGE_WHITE = (255, 250, 240)
+
+        STAR_GOLD = (255, 220, 120)
+        STAR_WHITE = (255, 245, 230)
+        STAR_BLUE1 = (30, 70, 170)
+        STAR_BLUE2 = (70, 150, 255)
+        DEEP_SPACE = (10, 18, 60)
+
+        # --- 场面尺度（很大）---
+        WIDTH = 96.0
+        DEPTH = 64.0
+        Z_CENTER = 6.0     # “门”中心稍偏前
+        CLOUD_ZFAR = 18.0  # 云幕的主要纵深
+        CLOUD_ZNEAR = -14.0
+
+        # --- 节奏/密度（intensity 会线性放大）---
+        dt = 0.06 / max(0.7, intensity)
+
+        # 开门时长（云幕从合到开）
+        open_ticks = int(round(64 * intensity))
+        open_ticks = max(48, open_ticks)
+
+        # 星海推进时长
+        star_ticks = int(round(44 * intensity))
+        star_ticks = max(34, star_ticks)
+
+        # 终章推满时长
+        finale_ticks = int(round(24 * intensity))
+        finale_ticks = max(18, finale_ticks)
+
+        # 每拍云的“丝”数量（越多越像云）
+        cloud_strands = int(round(12 + 10 * intensity))
+        cloud_strands = max(14, cloud_strands)
+
+        # 每拍星点数量
+        stars_per_tick = int(round(10 + 14 * intensity))
+        stars_per_tick = max(12, stars_per_tick)
+
+        # 星海爆闪类型池（华丽但不过度依赖 flower/love）
+        star_types = [
+            T.planet_random_color, T.planet_ball,
+            T.mixed_color_ball, T.half_half_color_ball,
+            T.double_ball, T.circle, T.random_color
+        ]
+
+        # ==========================================================
+        # Phase 0：深空底（很淡，但让“开门后”更有层次）
+        # ==========================================================
+        bg = int(round(50 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (WIDTH * 0.52)
+            pz = (rnd() * 2.0 - 1.0) * (DEPTH * 0.45)
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = DEEP_SPACE if i % 3 else STAR_BLUE1
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：云海开门（两侧云幕向外拉开，中间形成“门缝”）
+        # ==========================================================
+        for k in range(open_ticks):
+            u = k / max(1, open_ticks - 1)  # 0..1
+            # 门缝宽度从小到大
+            gap = (8.0 + 34.0 * (u ** 1.15))  # 半宽
+            # 云幕厚度呼吸
+            puff = 0.75 + 0.45 * math.sin(u * math.pi)
+
+            for s in range(cloud_strands):
+                # 在纵深上分布云丝，形成云海体积
+                z = Z_CENTER + (rnd() * 2.0 - 1.0) * (0.55 * DEPTH)
+                z += 10.0 * math.sin(0.6 * u + s * 0.2)
+
+                # 左云幕：起点靠近门缝边缘，速度向左外推
+                xL = -(gap + 4.0 + 10.0 * rnd())
+                # 右云幕：对称
+                xR = +(gap + 4.0 + 10.0 * rnd())
+
+                # 云丝速度：横向为主（拉幕），vy 稳定上扬，z 有轻微漂移
+                wx = (16.0 + 18.0 * u) * puff
+                driftz = 6.0 * math.sin(u * 3.0 + s) + (rnd() * 2.0 - 1.0) * 3.0
+                vy = clamp_vy(18.0 + 10.0 * puff + 6.0 * intensity)
+
+                # 颜色：云体冷白+淡紫交织，偶尔银灰增加层次
+                pick = (s + k) % 9
+                if pick < 4:
+                    col = CLOUD_A
+                elif pick < 7:
+                    col = CLOUD_B
+                elif pick == 7:
+                    col = CLOUD_C
+                else:
+                    col = CLOUD_D
+
+                # 多丝分层：让云像“帘”一样厚
+                off = (s % 3 - 1) * 1.2
+                fire((xL + off, 0.0, z), (-wx, vy, driftz), T.nothing, col)
+                fire((xR - off, 0.0, z), (+wx, vy, -driftz), T.nothing, col)
+
+                # 门缝边缘描一条“亮边”（开门越大越明显）
+                if (s % 6 == 0) and (k % 3 == 0):
+                    edge_y = clamp_vy(22.0 + 8.0 * u + 6.0 * intensity)
+                    # 左边缘
+                    fire((-(gap + 1.2), 0.0, z),
+                        (-6.0 - 4.0 * u, edge_y, 2.0 * math.cos(u * 5.0 + s)),
+                        T.nothing, EDGE_WHITE if (s % 12 == 0) else EDGE_GOLD)
+                    # 右边缘
+                    fire(((gap + 1.2), 0.0, z),
+                        (6.0 + 4.0 * u, edge_y, 2.0 * math.sin(u * 5.0 + s)),
+                        T.nothing, EDGE_WHITE if (s % 12 == 0) else EDGE_GOLD)
+
+            time.sleep(dt)
+
+        time.sleep(0.22)
+
+        # ==========================================================
+        # Phase 2：门内星海显现（从门缝里“涌出”星点与星团）
+        # ==========================================================
+        for k in range(star_ticks):
+            u = k / max(1, star_ticks - 1)  # 0..1
+            # 门缝进一步“通透”，星海更宽
+            gap = 30.0 + 18.0 * u
+            # 星海脉冲：有推进感
+            surge = 0.85 + 0.55 * math.sin(u * math.pi)
+
+            for i in range(stars_per_tick):
+                # 星点从门内区域产生：|x| < gap
+                px = (rnd() * 2.0 - 1.0) * gap
+                # 纵深分两层：前景更亮、后景更蓝
+                if i % 2 == 0:
+                    pz = Z_CENTER + 8.0 + (rnd() * 2.0 - 1.0) * 10.0
+                    base_col = STAR_GOLD if (i % 6 == 0) else STAR_WHITE
+                else:
+                    pz = Z_CENTER + 22.0 + (rnd() * 2.0 - 1.0) * 18.0
+                    base_col = STAR_BLUE2 if (i % 5) else STAR_BLUE1
+
+                # 速度：像星海从门内“涌出”，向上+向外扩散一点
+                vx = (px * 0.10) + (rnd() * 2.0 - 1.0) * (10.0 + 6.0 * u) * surge
+                vz = (rnd() * 2.0 - 1.0) * (10.0 + 10.0 * u)
+                vy = clamp_vy(28.0 + 12.0 * surge + 6.0 * intensity)
+
+                ftype = star_types[(k + i) % len(star_types)] if rnd() < 0.2 else T.nothing
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, base_col)
+
+                if i % 10 == 0:
+                    time.sleep(0.003)
+
+            # 星海“流光”——少量 nothing 拉出丝状星尘（更梦幻）
+            if k % 3 == 0:
+                trails = int(round(6 + 6 * intensity))
+                for j in range(trails):
+                    px = (rnd() * 2.0 - 1.0) * (gap * 0.95)
+                    pz = Z_CENTER + (rnd() * 2.0 - 1.0) * 22.0 + 10.0
+                    vx = (rnd() * 2.0 - 1.0) * 10.0
+                    vz = (rnd() * 2.0 - 1.0) * 10.0
+                    vy = clamp_vy(20.0 + 8.0 * intensity)
+                    col = STAR_WHITE if j % 2 == 0 else STAR_BLUE2
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(dt)
+
+        time.sleep(0.25)
+
+        # ==========================================================
+        # Phase 3：终章——云边圣光 + 星海推满（大、亮、收束）
+        # ==========================================================
+        for k in range(finale_ticks):
+            u = k / max(1, finale_ticks - 1)
+            gap = 46.0  # 最终门完全打开
+            flash = 0.85 + 0.55 * math.sin(u * math.pi)
+
+            # 1) 云边“圣光描边”强化（像门框发光）
+            edge_count = int(round(18 * intensity))
+            for i in range(edge_count):
+                z = Z_CENTER + (rnd() * 2.0 - 1.0) * (DEPTH * 0.55)
+                # 左右门框
+                for side in (-1.0, 1.0):
+                    px = side * (gap + 1.5 + 2.0 * rnd())
+                    vx = side * (8.0 + 8.0 * flash)
+                    vz = (rnd() * 2.0 - 1.0) * 6.0
+                    vy = clamp_vy(32.0 + 10.0 * flash + 6.0 * intensity)
+                    col = EDGE_WHITE if i % 4 == 0 else EDGE_GOLD
+                    fire((px, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+            # 2) 门内一次“星海洪流”（更大更炸）
+            big = int(round(34 * intensity))
+            for i in range(big):
+                th = (2.0 * math.pi) * (i / max(1, big))
+                rad = 16.0 + 18.0 * rnd()
+                px = (rnd() * 2.0 - 1.0) * gap * 0.92
+                pz = Z_CENTER + 10.0 + (rnd() * 2.0 - 1.0) * 16.0
+
+                vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+                vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 8.0
+                vy = clamp_vy(44.0 + 10.0 * rnd() + 6.0 * intensity)
+
+                ftype = [T.double_ball, T.planet_random_color, T.mixed_color_ball, T.circle][i % 4] if rnd() < 0.3 else T.nothing
+                col = STAR_WHITE if i % 3 == 0 else STAR_GOLD
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 10 == 0:
+                    time.sleep(0.004)
+
+            time.sleep(0.07)
+
+        time.sleep(0.25)
+
+    def climax_prism_burst_corridor(self, intensity=1.0, corridor_frames=12, refraction_spread=28.0):
+        T = self.type_firework
+        intensity = 0.5
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 颜色（RGB 0-255）
+        GLASS_1 = (220, 235, 255)
+        GLASS_2 = (170, 215, 255)
+        GLASS_3 = (200, 200, 230)
+        WHITEGOLD = (255, 245, 230)
+        GOLD = (255, 220, 120)
+
+        RAINBOW = [
+            (255, 70, 70),    # R
+            (255, 140, 60),   # O
+            (255, 230, 80),   # Y
+            (60, 230, 120),   # G
+            (60, 210, 255),   # C
+            (60, 120, 255),   # B
+            (190, 90, 255),   # P
+        ]
+
+        # 华丽节点（少量，贵气）
+        gem_pool = [T.circle, T.double_ball, T.mixed_color_ball, T.planet_ball, T.planet_random_color, T.half_half_color_ball]
+
+        # 长廊尺度（z 方向是纵深）
+        corridor_frames = int(max(8, corridor_frames))
+        far_z = 62.0
+        near_z = -10.0
+        z_span = far_z - near_z
+
+        # 透视尺寸：远小近大
+        far_w, far_h = 16.0, 10.0
+        near_w, near_h = 64.0, 40.0
+
+        # “棱镜点”在中段
+        prism_z = near_z + 0.55 * z_span
+
+        # 线条厚度（玻璃边）
+        edge_strands = int(round(2 + 2 * intensity))
+        edge_strands = max(2, edge_strands)
+
+        dt = 0.06 / max(0.7, intensity)
+
+        # -----------------------------
+        # 工具：画一个“水晶门框”（带倒角，像棱镜框）
+        # -----------------------------
+        def draw_frame(z, w, h, color_main, color_hi, depth_wobble=0.0, brighten=0.0):
+            # 倒角比例
+            cham = 0.22
+            cx = w * cham
+            cz = h * cham
+
+            # 8边形轮廓点（x,z平面）
+            pts = [
+                (-w/2 + cx, -h/2), ( w/2 - cx, -h/2),
+                ( w/2, -h/2 + cz), ( w/2,  h/2 - cz),
+                ( w/2 - cx,  h/2), (-w/2 + cx,  h/2),
+                (-w/2,  h/2 - cz), (-w/2, -h/2 + cz),
+            ]
+
+            # 画边：pts[i] -> pts[i+1]
+            for i in range(len(pts)):
+                x0, z0 = pts[i]
+                x1, z1 = pts[(i + 1) % len(pts)]
+
+                # 分段数：越大越细腻
+                segs = int(round(6 + 6 * intensity))
+                segs = max(6, segs)
+
+                for s in range(segs):
+                    u = s / max(1, segs - 1)
+                    px = x0 + (x1 - x0) * u
+                    pz = z0 + (z1 - z0) * u
+
+                    # 加一点深度起伏，让框“像玻璃在折光”
+                    pz2 = z + pz + depth_wobble * math.sin(u * 6.0 + i)
+
+                    # 速度：轻微沿边推开 + 上扬（线条会更“立”）
+                    # 边的切向
+                    tx = (x1 - x0)
+                    tz = (z1 - z0)
+                    m = (tx * tx + tz * tz) ** 0.5 + 1e-6
+                    tx, tz = tx / m, tz / m
+
+                    vx = 6.0 * tx + (rnd() * 2.0 - 1.0) * 1.8
+                    vz = 6.0 * tz + (rnd() * 2.0 - 1.0) * 1.8
+                    vy = clamp_vy(18.0 + 6.0 * intensity + brighten)
+
+                    # 多股并排增加“玻璃厚度”
+                    for k in range(edge_strands):
+                        off = (k - (edge_strands - 1) / 2.0) * 0.9
+                        col = color_hi if ((s + i + k) % 9 == 0) else color_main
+                        fire((px + off, 0.0, pz2 - off * 0.6), (vx, vy, vz), T.nothing, col)
+
+                # 少量停顿，避免一次性喷太猛
+                if i % 2 == 0:
+                    time.sleep(0.004)
+
+        # ==========================================================
+        # Phase A：水晶长廊骨架（透视门框一层层立起来）
+        # ==========================================================
+        for f in range(corridor_frames):
+            a = f / max(1, corridor_frames - 1)          # 0(远) -> 1(近)
+            z = far_z - a * z_span
+
+            w = far_w + (near_w - far_w) * (a ** 1.25)
+            h = far_h + (near_h - far_h) * (a ** 1.25)
+
+            # 远处偏冷、近处偏亮
+            col_main = GLASS_3 if a < 0.35 else (GLASS_2 if a < 0.7 else GLASS_1)
+            col_hi = WHITEGOLD if a > 0.75 else GLASS_1
+
+            wob = (2.0 + 5.0 * a) * math.sin(0.9 * f) * 0.35
+            draw_frame(z, w, h, col_main, col_hi, depth_wobble=wob, brighten=0.0)
+
+            time.sleep(0.03)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase B：白光穿梭（从远端沿长廊推进到棱镜点）
+        # ==========================================================
+        beam_ticks = int(round(46 * intensity))
+        beam_ticks = max(34, beam_ticks)
+
+        for k in range(beam_ticks):
+            u = k / max(1, beam_ticks - 1)
+            # 白光所在深度：远 -> prism_z
+            z = far_z - u * (far_z - prism_z)
+
+            # 光束宽度逐渐收拢（像聚焦穿过走廊）
+            spread = (24.0 * (1.0 - u) + 10.0) * (0.9 + 0.2 * rnd())
+
+            shots = int(round(16 + 14 * intensity))
+            for i in range(shots):
+                px = (rnd() * 2.0 - 1.0) * spread
+                pz = z + (rnd() * 2.0 - 1.0) * 3.0
+
+                # 速度主要沿“向近处推进”的方向：这里用 vz 偏向 near_z
+                vx = (rnd() * 2.0 - 1.0) * 6.0
+                vz = -(18.0 + 16.0 * u) + (rnd() * 2.0 - 1.0) * 4.0
+                vy = clamp_vy(14.0 + 6.0 * intensity)  # 注意 vy 仍 > 0
+
+                # 白光主体用 nothing，偶尔 circle 做“光斑”
+                if (i % 11 == 0) and (k % 3 == 0):
+                    fire((px, 0.0, pz), (vx, clamp_vy(28.0), vz * 0.35), T.circle, WHITEGOLD)
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, WHITEGOLD)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase C：棱镜折射（白光在 prism_z 分裂成七色光束）
+        # ==========================================================
+        # 折射角度（度）
+        spread_deg = float(refraction_spread)
+        spread_rad = spread_deg * math.pi / 180.0
+
+        # 7束：从左到右均匀分布
+        beams = 7
+        refract_ticks = int(round(26 * intensity))
+        refract_ticks = max(18, refract_ticks)
+
+        for k in range(refract_ticks):
+            u = k / max(1, refract_ticks - 1)
+            # 折射越往后越“张开”
+            open_factor = 0.65 + 0.55 * math.sin(u * math.pi)
+
+            # 每束每拍发射多少“光丝”
+            per_beam = int(round(10 + 10 * intensity))
+            for b in range(beams):
+                # beam index -> [-1, 1]
+                t = (b / (beams - 1)) * 2.0 - 1.0
+                # 目标偏转方向（不靠旋涡，只是折射扇开）
+                ang = t * spread_rad * open_factor
+
+                # 折射后的方向：主要向“近处”推进（vz负），并在 x 上分裂
+                dir_x = math.sin(ang)
+                dir_z = -math.cos(ang)
+
+                col = RAINBOW[b]
+
+                for i in range(per_beam):
+                    # 棱镜点附近略随机抖动，让光束更“活”
+                    px = (rnd() * 2.0 - 1.0) * 2.0
+                    pz = prism_z + (rnd() * 2.0 - 1.0) * 2.0
+
+                    speed = (26.0 + 18.0 * u) * (0.85 + 0.25 * rnd())
+                    vx = dir_x * speed + (rnd() * 2.0 - 1.0) * 4.0
+                    vz = dir_z * speed + (rnd() * 2.0 - 1.0) * 6.0
+                    vy = clamp_vy(18.0 + 8.0 * intensity + 4.0 * u)
+
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 轻微“折射高光”（少量，不会太炸）
+                    if (k % 5 == 0) and (i % 9 == 0):
+                        fire((px, 0.0, pz),
+                            (vx * 0.35, clamp_vy(30.0 + 6.0 * intensity), vz * 0.35),
+                            T.circle, WHITEGOLD)
+
+            time.sleep(dt)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase D：水晶共振（门框从远到近依次点亮，最后全亮收束）
+        # ==========================================================
+        # 依次点亮：每帧挑一个门框，角点打宝石爆闪
+        for f in range(corridor_frames):
+            a = f / max(1, corridor_frames - 1)
+            z = far_z - a * z_span
+
+            w = far_w + (near_w - far_w) * (a ** 1.25)
+            h = far_h + (near_h - far_h) * (a ** 1.25)
+
+            # 先把这一框加亮描边一遍
+            draw_frame(z, w, h, GLASS_1, WHITEGOLD, depth_wobble=2.0 * math.sin(f), brighten=10.0)
+
+            # 再在“角点/倒角点”打宝石节点（非常“贵”）
+            cham = 0.22
+            cx = w * cham
+            cz = h * cham
+            nodes = [
+                (-w/2 + cx, -h/2),
+                ( w/2 - cx, -h/2),
+                ( w/2, -h/2 + cz),
+                ( w/2,  h/2 - cz),
+                ( w/2 - cx,  h/2),
+                (-w/2 + cx,  h/2),
+                (-w/2,  h/2 - cz),
+                (-w/2, -h/2 + cz),
+            ]
+
+            # 每个框只炸一半节点，避免卡，但足够华丽
+            pick_n = 4
+            base_idx = int(rnd() * 8)
+            for j in range(pick_n):
+                x, dz = nodes[(base_idx + j * 2) % 8]
+                pz = z + dz + (rnd() * 2.0 - 1.0) * 1.2
+
+                th = (2.0 * math.pi) * (j / pick_n)
+                rad = 16.0 + 10.0 * rnd()
+                vx = math.cos(th) * rad
+                vz = math.sin(th) * rad
+                vy = clamp_vy(38.0 + 6.0 * intensity)
+
+                ftype = gem_pool[(f + j) % len(gem_pool)]
+                col = GOLD if (j % 2 == 0) else WHITEGOLD
+                fire((x, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                time.sleep(0.01)
+
+            time.sleep(0.06)
+
+        # 终章：全走廊“通电”一次（从中心向外的金白共振）
+        finale = int(round(90 * intensity))
+        finale = max(70, finale)
+
+        for i in range(finale):
+            th = (2.0 * math.pi) * (i / finale)
+            rad = 18.0 + 16.0 * rnd()
+
+            # 从棱镜点附近喷出“金白共振波”
+            px = (rnd() * 2.0 - 1.0) * 6.0
+            pz = prism_z + (rnd() * 2.0 - 1.0) * 4.0
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(44.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            ftype = gem_pool[i % len(gem_pool)]
+            col = WHITEGOLD if i % 3 == 0 else GOLD
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+    def climax_hyper_torus_bloom(self, intensity=1.0, major_R=44.0, minor_r=14.0):
+        T = self.type_firework
+        intensity = max(0.5, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 配色：青蓝/紫辉 + 金白能量
+        DEEP = (10, 18, 60)
+        CYAN = (70, 150, 255)
+        AQUA = (60, 210, 255)
+        PURPLE = (190, 90, 255)
+        WHITEGOLD = (255, 245, 230)
+        GOLD = (255, 220, 120)
+
+        burst_pool = [T.double_ball, T.mixed_color_ball, T.half_half_color_ball, T.planet_ball, T.planet_random_color, T.circle]
+
+        dt = 0.06 / max(0.7, intensity)
+
+        # -------------------------
+        # 环面参数化（主半径 R，管半径 r）
+        # 我们把“竖向”用 y 方向的速度表达（位置只用 x,z）
+        # 通过 depth_shift（z）制造前后景层次
+        # -------------------------
+        R = float(major_R)
+        r = float(minor_r)
+
+        # 采样密度（越大越细腻，但更吃性能）
+        U_STEPS = int(round(22 * intensity))  # 主环角
+        V_STEPS = int(round(14 * intensity))  # 管截面角
+        U_STEPS = max(16, U_STEPS)
+        V_STEPS = max(10, V_STEPS)
+
+        # 每个点的“厚度”用多发 few strands 增强体积感
+        strands = int(round(2 + 2 * intensity))
+        strands = max(2, strands)
+
+        # ==========================================================
+        # Phase 0：深空底（淡，增强对比）
+        # ==========================================================
+        bg = int(round(45 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (R * 0.9)
+            pz = (rnd() * 2.0 - 1.0) * (R * 0.7)
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, DEEP if i % 3 else CYAN)
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：织出环面体积（点云/线云，不是圆环）
+        # 关键：V 是管截面角，导致环面“厚”而立体
+        # ==========================================================
+        for uu in range(U_STEPS):
+            u = (2.0 * math.pi) * (uu / U_STEPS)
+
+            # 每条主环“经线”往前后景摆动一点，形成体积
+            u_wob = 0.55 * math.sin(u * 1.7)
+
+            for vv in range(V_STEPS):
+                v = (2.0 * math.pi) * (vv / V_STEPS)
+
+                # 环面点（x,z平面），并给 z 加深度偏移
+                # 标准：x=(R+r cos v) cos u, z=(R+r cos v) sin u, y=r sin v
+                # 这里 y 不做位置，只转为 vy 的变化：sin v 决定“上扬强度”
+                tube = r * math.cos(v)
+                px = (R + tube) * math.cos(u)
+                pz = (R + tube) * math.sin(u) + (r * 0.65) * math.sin(v + u_wob)
+
+                # 速度：轻微向外推开（像“织出来”），并根据 sin(v) 提升上扬形成厚度错觉
+                outward = 7.0 + 5.0 * rnd()
+                vx0 = outward * math.cos(u) + (rnd() * 2.0 - 1.0) * 2.0
+                vz0 = outward * math.sin(u) + (rnd() * 2.0 - 1.0) * 2.0
+                vy0 = clamp_vy(18.0 + 10.0 * intensity + 8.0 * max(0.0, math.sin(v)))
+
+                # 颜色：外表面偏青蓝，内侧偏紫辉（用 cos(v) 区分）
+                if math.cos(v) > 0.2:
+                    base_col = AQUA
+                elif math.cos(v) < -0.2:
+                    base_col = PURPLE
+                else:
+                    base_col = CYAN
+
+                # 多股增强“体积”
+                for s in range(strands):
+                    off = (s - (strands - 1) / 2.0) * 0.9
+                    col = WHITEGOLD if ((uu + vv + s) % 17 == 0) else base_col
+                    fire((px + off * (-math.sin(u)), 0.0, pz + off * (math.cos(u))),
+                        (vx0, vy0, vz0),
+                        T.nothing, col)
+
+                if vv % 4 == 0:
+                    time.sleep(0.003)
+
+            time.sleep(0.012)
+
+        time.sleep(0.22)
+
+        # ==========================================================
+        # Phase 2：能量通道（沿内圈切线脉冲，不旋涡，像“环面内部在流动”）
+        # ==========================================================
+        pulses = int(round(34 * intensity))
+        pulses = max(24, pulses)
+
+        for k in range(pulses):
+            t = k / max(1, pulses - 1)
+            surge = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            # 每次脉冲抽取若干 u 点，沿切线方向喷出金白能量
+            shots = int(round(18 + 14 * intensity))
+            for i in range(shots):
+                u = (2.0 * math.pi) * rnd()
+
+                # 选“内圈”点：tube 取负（cos v ~ -1），让点更靠内侧
+                tube = -r * (0.75 + 0.20 * rnd())
+                px = (R + tube) * math.cos(u)
+                pz = (R + tube) * math.sin(u)
+
+                # 切线方向（-sin u, cos u），能量沿环面流动
+                tx, tz = -math.sin(u), math.cos(u)
+
+                speed = (26.0 + 16.0 * surge) * (0.85 + 0.25 * rnd())
+                vx = tx * speed + (rnd() * 2.0 - 1.0) * 3.5
+                vz = tz * speed + (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(22.0 + 10.0 * intensity + 6.0 * surge)
+
+                # 主通道用金白
+                col = WHITEGOLD if i % 3 == 0 else GOLD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                # 少量“能量节点”闪一下（贵气，但不过度炸）
+                if (k % 5 == 0) and (i % 9 == 0):
+                    ftype = burst_pool[(k + i) % len(burst_pool)]
+                    fire((px, 0.0, pz),
+                        (vx * 0.25, clamp_vy(36.0 + 6.0 * intensity), vz * 0.25),
+                        ftype, WHITEGOLD)
+
+                if i % 10 == 0:
+                    time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：崩解成星尘雨 + 少量彩爆（收束）
+        # ==========================================================
+        collapse = int(round(110 * intensity))
+        collapse = max(80, collapse)
+
+        for i in range(collapse):
+            u = (2.0 * math.pi) * rnd()
+            v = (2.0 * math.pi) * rnd()
+
+            tube = r * math.cos(v)
+            px = (R + tube) * math.cos(u)
+            pz = (R + tube) * math.sin(u) + (r * 0.55) * math.sin(v)
+
+            # 崩解：向外散 + 向上抬（合法），并带一点“下坠错觉”的横向拉扯
+            vx = (18.0 + 10.0 * rnd()) * math.cos(u) + (rnd() * 2.0 - 1.0) * 6.0
+            vz = (18.0 + 10.0 * rnd()) * math.sin(u) + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(34.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            # 颜色：外散时混入青蓝/紫辉，偶尔金白高光
+            if i % 9 == 0:
+                col = WHITEGOLD
+            elif i % 4 == 0:
+                col = PURPLE
+            else:
+                col = AQUA if i % 2 == 0 else CYAN
+
+            # 大部分用星尘（nothing），少量爆闪点做收束
+            if i % 14 == 0:
+                ftype = burst_pool[i % len(burst_pool)]
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+            else:
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            if i % 12 == 0:
+                time.sleep(0.006)
+
+        time.sleep(0.25)
+
+
+    def climax_milkyway_bridgefall(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.5, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 配色：银河（深蓝底 + 白金星沙 + 青蓝辉光）
+        DEEP = (10, 18, 60)
+        BLUE = (30, 70, 170)
+        CYAN = (70, 150, 255)
+        WHITEGOLD = (255, 245, 230)
+        GOLD = (255, 220, 120)
+
+        # 华丽节点（少量）
+        cap_pool = [
+            T.double_ball, T.mixed_color_ball, T.half_half_color_ball,
+            T.planet_ball, T.planet_random_color, T.circle
+        ]
+
+        # 桥的尺寸（x-z 平面是一座拱桥）
+        SPAN = 96.0         # 桥宽（左右跨度）
+        ARCH_H = 34.0       # 拱高（体现在 z 的曲线高度，不是 y）
+        Z0 = 10.0           # 桥大致位置（z）
+        Z_DEPTH = 18.0      # 让桥有“前后厚度”一点点
+
+        # 节奏
+        dt = 0.055 / max(0.7, intensity)
+
+        # 工具：拱桥曲线（u in [-1, 1]）
+        # 用抛物线：中心最高，两端回到低处
+        def arch_point(u):
+            x = u * (SPAN * 0.5)
+            z = Z0 + ARCH_H * (1.0 - u * u)
+            return x, z
+
+        # 工具：拱桥切线方向（用于“沿桥流动”）
+        def arch_tangent(u):
+            # x = a*u, z = Z0 + H*(1-u^2) => dz/du = -2H*u, dx/du = a
+            dx = (SPAN * 0.5)
+            dz = -2.0 * ARCH_H * u
+            m = (dx * dx + dz * dz) ** 0.5 + 1e-6
+            return dx / m, dz / m
+
+        # ==========================================================
+        # Phase 0：深空底（很淡，增强对比）
+        # ==========================================================
+        bg = int(round(45 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (SPAN * 0.55)
+            pz = (rnd() * 2.0 - 1.0) * (ARCH_H * 1.1) + Z0
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = DEEP if i % 3 else BLUE
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.15)
+
+        # ==========================================================
+        # Phase 1：搭桥（清晰轮廓：两条拱 + 桥面横梁）
+        # ==========================================================
+        arch_pts = int(round(70 * intensity))
+        arch_pts = max(54, arch_pts)
+
+        # 1A) 双拱（前后两条，形成厚度）
+        for layer in range(2):
+            z_shift = (Z_DEPTH * 0.5) * (1.0 if layer == 0 else -1.0)
+            for i in range(arch_pts):
+                u = (i / max(1, arch_pts - 1)) * 2.0 - 1.0
+                x, z = arch_point(u)
+                z += z_shift + 1.2 * math.sin(u * 3.0)  # 微起伏更“星河”
+
+                tx, tz = arch_tangent(u)
+                # 速度：轻推沿切线 + 上扬（让线条立起来）
+                vx = 6.0 * tx + (rnd() * 2.0 - 1.0) * 1.8
+                vz = 6.0 * tz + (rnd() * 2.0 - 1.0) * 1.8
+                vy = clamp_vy(18.0 + 8.0 * intensity)
+
+                # 颜色：白金描边为主，夹少量青蓝辉光
+                col = WHITEGOLD if (i % 8 == 0) else (CYAN if (i % 5 == 0) else BLUE)
+                fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+                if i % 10 == 0:
+                    time.sleep(0.004)
+            time.sleep(0.03)
+
+        # 1B) 桥面横梁（在较低处连成“桥板”）
+        beams = int(round(10 * intensity))
+        beams = max(8, beams)
+        for b in range(beams):
+            u = (b / max(1, beams - 1)) * 2.0 - 1.0
+            x, z = arch_point(u)
+            z = Z0 + (ARCH_H * 0.35) + 2.5 * math.sin(u * math.pi)  # 桥板更平
+
+            # 一条短横梁：左右各喷一点线
+            span_local = 10.0 + 10.0 * (1.0 - abs(u))
+            segs = int(round(10 * intensity))
+            segs = max(8, segs)
+
+            for i in range(segs):
+                t = (i / max(1, segs - 1)) * 2.0 - 1.0
+                px = x + t * (span_local * 0.5)
+                pz = z + (rnd() * 2.0 - 1.0) * 1.4
+                vx = 5.0 * t + (rnd() * 2.0 - 1.0) * 1.0
+                vz = (rnd() * 2.0 - 1.0) * 2.0
+                vy = clamp_vy(18.0 + 6.0 * intensity)
+
+                col = GOLD if (i % 7 == 0) else WHITEGOLD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(0.02)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 2：桥面星沙流动（沿拱切线“跑光”）
+        # ==========================================================
+        flow_ticks = int(round(46 * intensity))
+        flow_ticks = max(34, flow_ticks)
+
+        for k in range(flow_ticks):
+            t = k / max(1, flow_ticks - 1)
+            surge = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            shots = int(round(18 + 18 * intensity))
+            for i in range(shots):
+                # 取拱上一点，偏向桥面上半部
+                u = (rnd() * 2.0 - 1.0)
+                x, z = arch_point(u)
+                z += (rnd() * 2.0 - 1.0) * 3.0
+
+                # 流动方向：沿切线向两端“奔流”
+                tx, tz = arch_tangent(u)
+                dir_sign = -1.0 if (i % 2 == 0) else 1.0  # 左右交替奔流
+                speed = (22.0 + 18.0 * surge) * (0.85 + 0.25 * rnd())
+
+                vx = dir_sign * tx * speed + (rnd() * 2.0 - 1.0) * 3.0
+                vz = dir_sign * tz * speed + (rnd() * 2.0 - 1.0) * 4.5
+                vy = clamp_vy(20.0 + 8.0 * intensity + 6.0 * surge)
+
+                # 星沙颜色：白金为主，夹青蓝
+                col = WHITEGOLD if (i % 3 == 0) else (CYAN if i % 5 == 0 else GOLD)
+                fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+                # 少量“星团闪点”
+                if (k % 6 == 0) and (i % 11 == 0):
+                    fire((x, 0.0, z), (vx * 0.25, clamp_vy(34.0 + 6.0 * intensity), vz * 0.25),
+                        T.circle, WHITEGOLD)
+
+                if i % 10 == 0:
+                    time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：泄落成瀑（从拱下沿多点“滴落”，形成银河瀑布）
+        # 说明：vy 设得很低（但 > MIN_VY），配合引擎重力会更像下坠。
+        # ==========================================================
+        fall_ticks = int(round(54 * intensity))
+        fall_ticks = max(40, fall_ticks)
+
+        for k in range(fall_ticks):
+            t = k / max(1, fall_ticks - 1)
+            # 越到后面越密，像瀑布加大流量
+            density = 0.65 + 0.55 * t
+
+            drops = int(round((18 + 22 * intensity) * density))
+            for i in range(drops):
+                # 从拱下沿取点：让它看起来从桥下“漏”下来
+                u = (rnd() * 2.0 - 1.0) * (0.95 - 0.25 * rnd())
+                x, z_top = arch_point(u)
+
+                # 下沿位置：比拱低一截，且带前后层次
+                z = (Z0 + ARCH_H * (1.0 - u * u)) - (10.0 + 8.0 * rnd())
+                z += (rnd() * 2.0 - 1.0) * (Z_DEPTH * 0.6)
+
+                # 速度：vy 很小（合法），横向/纵向拉开，形成“坠落轨迹”
+                # 让瀑布略向舞台中心聚拢
+                vx = (-x * 0.14) + (rnd() * 2.0 - 1.0) * 8.0
+                vz = (-6.0 - 14.0 * rnd()) + (rnd() * 2.0 - 1.0) * 6.0
+                vy = clamp_vy(12.5 + 2.5 * rnd() + 2.0 * intensity)  # 接近最小值，制造“落感”
+
+                # 颜色：瀑布更偏冷白/青蓝，偶尔金白闪一下
+                if i % 9 == 0:
+                    col = WHITEGOLD
+                elif i % 3 == 0:
+                    col = CYAN
+                else:
+                    col = BLUE
+
+                fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+                if i % 14 == 0:
+                    time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 4：桥端封顶（两端同时爆闪，收束“桥”这个主题）
+        # ==========================================================
+        end_bursts = int(round(24 * intensity))
+        end_bursts = max(18, end_bursts)
+
+        for i in range(end_bursts):
+            side = -1.0 if (i % 2 == 0) else 1.0
+            u = side * 1.0
+            x, z = arch_point(u)
+            # 两端略抬高一点
+            z = Z0 + 6.0 + (rnd() * 2.0 - 1.0) * 2.0
+
+            th = (2.0 * math.pi) * (i / end_bursts)
+            rad = 18.0 + 14.0 * rnd()
+
+            vx = -side * (10.0 + 8.0 * rnd()) + math.cos(th) * 6.0
+            vz = math.sin(th) * rad
+            vy = clamp_vy(40.0 + 6.0 * intensity)
+
+            ftype = cap_pool[i % len(cap_pool)]
+            col = GOLD if i % 3 else WHITEGOLD
+            fire((x, 0.0, z), (vx, vy, vz), ftype, col)
+
+            if i % 6 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+    def climax_day_night_flip(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.5
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 颜色（RGB 0~255）
+        # 左：极昼（金白/暖光/淡橙）
+        # 右：极夜（深蓝/群青/冷白星点）
+        # 中：分界线（白金+少量青蓝电辉）
+        # -------------------------
+        DAY_WHITE = (255, 250, 240)
+        DAY_GOLD  = (255, 220, 120)
+        DAY_AMBER = (255, 160, 80)
+
+        NIGHT_DEEP = (10, 16, 55)
+        NIGHT_BLUE = (30, 70, 170)
+        NIGHT_CYAN = (70, 150, 255)
+        STAR_WHITE = (255, 245, 230)
+
+        LINE_WHITE = (255, 250, 245)
+        LINE_GOLD  = (255, 230, 150)
+        LINE_CYAN  = (120, 220, 255)
+
+        # 少量高光类型（不要太炸）
+        sparkle_pool = [T.circle, T.double_ball, T.planet_ball, T.planet_random_color, T.mixed_color_ball]
+
+        # -------------------------
+        # 舞台尺度（很大）
+        # -------------------------
+        XMAX = 92.0
+        ZMAX = 64.0
+        ZCENTER = 8.0
+
+        # 时间控制
+        dt = 0.055 / max(0.7, intensity)
+
+        # 密度（可控，默认已经很壮观）
+        base_pts = int(round(18 + 18 * intensity))     # 每帧铺底点数
+        base_pts = max(18, base_pts)
+
+        stars_pts = int(round(14 + 14 * intensity))    # 夜侧星点
+        stars_pts = max(14, stars_pts)
+
+        line_pts = int(round(22 + 22 * intensity))     # 分界线密度
+        line_pts = max(22, line_pts)
+
+        # 各阶段帧数
+        warmup_ticks = int(round(40 * intensity))      # 先分别铺“昼/夜”
+        warmup_ticks = max(30, warmup_ticks)
+
+        blend_ticks  = int(round(36 * intensity))      # 两侧互相“侵染”，强化概念
+        blend_ticks  = max(28, blend_ticks)
+
+        sweep_ticks  = int(round(64 * intensity))      # 分界线大扫描
+        sweep_ticks  = max(48, sweep_ticks)
+
+        finale_ticks = int(round(24 * intensity))      # 终章闪白收束
+        finale_ticks = max(18, finale_ticks)
+
+        # ==========================================================
+        # Phase 0：建立“昼/夜底场”（左暖右冷，规模先铺开）
+        # ==========================================================
+        for k in range(warmup_ticks):
+            t = k / max(1, warmup_ticks - 1)
+            swell = 0.75 + 0.45 * math.sin(t * math.pi)
+
+            # 左侧（极昼云光）
+            for i in range(base_pts):
+                px = -abs((rnd() * XMAX)) * (0.85 + 0.15 * rnd())
+                pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.55)
+
+                vx = (rnd() * 2.0 - 1.0) * 6.0 + 6.0 * (1.0 - t)   # 略向外扩散
+                vz = (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(18.0 + 10.0 * swell + 6.0 * intensity)
+
+                # 暖光渐变：越靠近中线越白金
+                near_mid = 1.0 - min(1.0, abs(px) / (XMAX * 0.65))
+                rsel = rnd()
+                if rsel < 0.45:
+                    col = DAY_GOLD
+                elif rsel < 0.75:
+                    col = DAY_AMBER
+                else:
+                    col = DAY_WHITE if near_mid > 0.35 else DAY_GOLD
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 12 == 0:
+                    time.sleep(0.0015)
+
+            # 右侧（极夜星海）
+            for i in range(stars_pts):
+                px = abs((rnd() * XMAX)) * (0.85 + 0.15 * rnd())
+                pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.60)
+
+                vx = (rnd() * 2.0 - 1.0) * 5.0 - 5.0 * (1.0 - t)   # 略向外扩散
+                vz = (rnd() * 2.0 - 1.0) * 6.0
+                vy = clamp_vy(16.0 + 8.0 * swell + 6.0 * intensity)
+
+                # 夜色：深空底 + 星点冷白/青蓝
+                rsel = rnd()
+                if rsel < 0.45:
+                    col = NIGHT_DEEP
+                elif rsel < 0.75:
+                    col = NIGHT_BLUE
+                elif rsel < 0.90:
+                    col = NIGHT_CYAN
+                else:
+                    col = STAR_WHITE
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                # 少量星点闪烁（很少）
+                if (k % 6 == 0) and (i % 9 == 0):
+                    fire((px, 0.0, pz), (vx * 0.25, clamp_vy(28.0), vz * 0.25), T.circle, STAR_WHITE)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：互相“侵染”的过渡（昼向右渗、夜向左渗，增强“切换”）
+        # ==========================================================
+        for k in range(blend_ticks):
+            t = k / max(1, blend_ticks - 1)
+            pulse = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            # 渗透宽度逐渐扩大
+            band = 10.0 + 28.0 * t
+
+            # 昼向右渗：在 x>0 的窄带打暖光
+            for i in range(int(round(base_pts * 0.65))):
+                px = (rnd() * band)  # 0..band
+                pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.50)
+
+                vx = (rnd() * 2.0 - 1.0) * 6.0 + 8.0 * pulse
+                vz = (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(20.0 + 10.0 * pulse + 6.0 * intensity)
+
+                col = DAY_WHITE if i % 3 == 0 else DAY_GOLD
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            # 夜向左渗：在 x<0 的窄带打冷蓝星雾
+            for i in range(int(round(stars_pts * 0.90))):
+                px = -(rnd() * band)
+                pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.55)
+
+                vx = (rnd() * 2.0 - 1.0) * 6.0 - 8.0 * pulse
+                vz = (rnd() * 2.0 - 1.0) * 6.0
+                vy = clamp_vy(18.0 + 10.0 * pulse + 6.0 * intensity)
+
+                col = NIGHT_CYAN if i % 4 == 0 else NIGHT_BLUE
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(dt)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 2：分界线巨型扫描（来回两次，极其壮观）
+        # 扫描线本身是“高亮墙”，扫过位置两侧颜色会“翻转增强”
+        # ==========================================================
+        sweeps = 2  # 来回两次
+        for s in range(sweeps):
+            for k in range(sweep_ticks):
+                t = k / max(1, sweep_ticks - 1)
+
+                # 线位置：第1次从左到右，第2次从右到左
+                if s % 2 == 0:
+                    x_line = -XMAX * 0.72 + (XMAX * 1.44) * t
+                else:
+                    x_line = +XMAX * 0.72 - (XMAX * 1.44) * t
+
+                # 线宽（视觉上是一堵光墙）
+                thickness = 6.0 + 10.0 * (0.5 + 0.5 * math.sin(t * math.pi))
+                pulse = 0.85 + 0.55 * math.sin((t + 0.1) * math.pi)
+
+                # 2A) 分界线本体（高亮密集）
+                for i in range(line_pts):
+                    # 沿 z 分布，形成纵向很长的墙
+                    pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.62)
+                    px = x_line + (rnd() * 2.0 - 1.0) * thickness
+
+                    vx = (rnd() * 2.0 - 1.0) * 6.0
+                    vz = (rnd() * 2.0 - 1.0) * 8.0
+                    vy = clamp_vy(28.0 + 12.0 * pulse + 6.0 * intensity)
+
+                    # 线色：白金为主，夹一点青蓝电辉
+                    col = LINE_WHITE if i % 4 != 0 else (LINE_GOLD if i % 8 != 0 else LINE_CYAN)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 少量节点闪一下（非常“电”）
+                    if (k % 6 == 0) and (i % 11 == 0):
+                        ftype = sparkle_pool[(k + i) % len(sparkle_pool)]
+                        fire((px, 0.0, pz), (vx * 0.25, clamp_vy(38.0 + 6.0 * intensity), vz * 0.25), ftype, LINE_WHITE)
+
+                # 2B) 扫描线“激活”两侧：左侧更昼、右侧更夜（增强对比）
+                side_hits = int(round(14 + 10 * intensity))
+                for i in range(side_hits):
+                    pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.55)
+
+                    # 左侧（极昼增强带）
+                    pxL = x_line - (8.0 + 10.0 * rnd())
+                    vxL = -10.0 - 10.0 * rnd()
+                    vzL = (rnd() * 2.0 - 1.0) * 6.0
+                    vyL = clamp_vy(20.0 + 8.0 * intensity + 6.0 * pulse)
+                    colL = DAY_WHITE if i % 3 == 0 else DAY_GOLD
+                    fire((pxL, 0.0, pz), (vxL, vyL, vzL), T.nothing, colL)
+
+                    # 右侧（极夜增强带）
+                    pxR = x_line + (8.0 + 10.0 * rnd())
+                    vxR = +10.0 + 10.0 * rnd()
+                    vzR = (rnd() * 2.0 - 1.0) * 6.0
+                    vyR = clamp_vy(18.0 + 8.0 * intensity + 6.0 * pulse)
+                    colR = STAR_WHITE if i % 5 == 0 else (NIGHT_CYAN if i % 2 == 0 else NIGHT_BLUE)
+                    fire((pxR, 0.0, pz), (vxR, vyR, vzR), T.nothing, colR)
+
+                time.sleep(dt)
+
+            time.sleep(0.12)
+
+        time.sleep(0.22)
+
+        # ==========================================================
+        # Phase 3：终章——分界线“归一化”大闪（全场金白收束）
+        # ==========================================================
+        for k in range(finale_ticks):
+            t = k / max(1, finale_ticks - 1)
+            flash = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            # 把整条中线附近炸亮（但仍控制爆炸数量）
+            big = int(round((36 + 24 * intensity) * flash))
+            for i in range(big):
+                px = (rnd() * 2.0 - 1.0) * 10.0
+                pz = ZCENTER + (rnd() * 2.0 - 1.0) * (ZMAX * 0.62)
+
+                th = (2.0 * math.pi) * (i / max(1, big))
+                rad = 18.0 + 18.0 * rnd()
+
+                vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+                vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+                vy = clamp_vy(44.0 + 10.0 * rnd() + 6.0 * intensity)
+
+                ftype = sparkle_pool[i % len(sparkle_pool)] if (i % 5 == 0) else T.nothing
+                col = LINE_WHITE if i % 3 == 0 else LINE_GOLD
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 12 == 0:
+                    time.sleep(0.004)
+
+            time.sleep(0.07)
+
+        time.sleep(0.25)
+
+
+    def climax_stargate_array_overload(self, intensity=1.0, gate_count=9):
+        T = self.type_firework
+        intensity = 0.3
+        gate_count = int(max(7, min(13, gate_count)))  # 7~13 之间比较稳
+
+        MIN_VY = 12.0
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 颜色（RGB 0~255）
+        FRAME_COLD = (210, 235, 255)
+        FRAME_DEEP = (90, 140, 210)
+        FRAME_WHITE = (255, 250, 240)
+        GOLD = (255, 220, 120)
+
+        FLOW_A = (70, 210, 255)
+        FLOW_B = (190, 90, 255)
+        FLOW_C = (255, 140, 60)
+        FLOW_D = (120, 255, 160)
+
+        # 节点/过载用的烟花类型（少量用，点睛）
+        node_pool = [T.circle, T.double_ball, T.planet_ball, T.planet_random_color, T.mixed_color_ball, T.half_half_color_ball]
+
+        # 舞台尺度（z 方向做纵深：远处门更小）
+        far_z = 72.0
+        near_z = -8.0
+        z_span = far_z - near_z
+
+        far_w, far_h = 18.0, 12.0
+        near_w, near_h = 76.0, 50.0
+
+        # 门框厚度（用多股 T.nothing 叠）
+        strands = int(round(2 + 2 * intensity))
+        strands = max(2, min(5, strands))
+
+        # 节奏
+        dt = 0.055 / max(0.7, intensity)
+
+        # -----------------------------
+        # 工具：圆角矩形轮廓点（8边形近似）
+        # -----------------------------
+        def gate_points(w, h):
+            cham = 0.22
+            cx = w * cham
+            cy = h * cham
+            return [
+                (-w/2 + cx, -h/2), ( w/2 - cx, -h/2),
+                ( w/2, -h/2 + cy), ( w/2,  h/2 - cy),
+                ( w/2 - cx,  h/2), (-w/2 + cx,  h/2),
+                (-w/2,  h/2 - cy), (-w/2, -h/2 + cy),
+            ]
+
+        # -----------------------------
+        # 工具：画一个门框（T.nothing），带轻微“电流抖动”
+        # -----------------------------
+        def draw_gate_frame(z, w, h, brightness=0.0, depth_wobble=0.0):
+            pts = gate_points(w, h)
+            segs = int(round(7 + 7 * intensity))
+            segs = max(7, segs)
+
+            for i in range(len(pts)):
+                x0, y0 = pts[i]
+                x1, y1 = pts[(i + 1) % len(pts)]
+                # 边切向
+                tx = x1 - x0
+                ty = y1 - y0
+                m = (tx * tx + ty * ty) ** 0.5 + 1e-6
+                tx, ty = tx / m, ty / m
+
+                for s in range(segs):
+                    u = s / max(1, segs - 1)
+                    px = x0 + (x1 - x0) * u
+                    py = y0 + (y1 - y0) * u
+
+                    # 用 py 影响 z 深度，形成“门面有体积”的错觉
+                    pz = z + depth_wobble * math.sin(u * 6.0 + i) + 0.18 * py
+
+                    # 速度：沿边轻推 + 上扬 + 电流噪声
+                    vx = 7.0 * tx + (rnd() * 2.0 - 1.0) * 2.2
+                    vz = 7.0 * ty + (rnd() * 2.0 - 1.0) * 2.2
+                    vy = clamp_vy(18.0 + 8.0 * intensity + brightness)
+
+                    for k in range(strands):
+                        off = (k - (strands - 1) / 2.0) * 0.9
+                        # 冷白为主，夹深蓝阴影
+                        col = FRAME_WHITE if ((i + s + k) % 11 == 0) else (FRAME_COLD if (s % 3 != 0) else FRAME_DEEP)
+                        fire((px + off * (-ty), 0.0, pz + off * (tx)), (vx, vy, vz), T.nothing, col)
+
+                if i % 2 == 0:
+                    time.sleep(0.003)
+
+        # -----------------------------
+        # 工具：门角/节点共振（少量爆闪）
+        # -----------------------------
+        def pulse_gate_nodes(z, w, h, step_idx, strong=False):
+            pts = gate_points(w, h)
+
+            # 只取 4 个“主角点”更稳：0,2,4,6
+            corners = [0, 2, 4, 6]
+            for j, ci in enumerate(corners):
+                x, y = pts[ci]
+                pz = z + 0.18 * y
+
+                # 节点向外发一点
+                th = (2.0 * math.pi) * (j / len(corners))
+                rad = (18.0 if not strong else 26.0) + 10.0 * rnd()
+
+                vx = math.cos(th) * rad
+                vz = math.sin(th) * rad
+                vy = clamp_vy((32.0 if not strong else 44.0) + 6.0 * intensity)
+
+                ftype = node_pool[(step_idx + j) % len(node_pool)]
+                col = GOLD if (j % 2 == 0) else FRAME_WHITE
+                fire((x, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                time.sleep(0.008 if strong else 0.004)
+
+        # ==========================================================
+        # Phase A：星门阵列“搭建”（远到近依次出现，纵深极强）
+        # ==========================================================
+        for g in range(gate_count):
+            a = g / max(1, gate_count - 1)  # 0远->1近
+            z = far_z - a * z_span
+
+            # 透视：近处更大
+            w = far_w + (near_w - far_w) * (a ** 1.25)
+            h = far_h + (near_h - far_h) * (a ** 1.25)
+
+            wob = (2.0 + 6.0 * a) * math.sin(g * 0.9) * 0.35
+            draw_gate_frame(z, w, h, brightness=0.0, depth_wobble=wob)
+
+            # 每出现一个门，给它轻点一下“角灯”
+            if g % 2 == 0:
+                pulse_gate_nodes(z, w, h, g, strong=False)
+
+            time.sleep(0.03)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase B：门间共振传递（像电流从远处一路传到近处）
+        # ==========================================================
+        relay_rounds = int(round(2 + 1 * intensity))
+        relay_rounds = max(2, relay_rounds)
+
+        for r in range(relay_rounds):
+            for g in range(gate_count):
+                a = g / max(1, gate_count - 1)
+                z = far_z - a * z_span
+                w = far_w + (near_w - far_w) * (a ** 1.25)
+                h = far_h + (near_h - far_h) * (a ** 1.25)
+
+                # 共振：只点节点 + 轻描一圈高光边
+                draw_gate_frame(z, w, h, brightness=6.0 + 4.0 * r, depth_wobble=2.0 * math.sin(g + r))
+                pulse_gate_nodes(z, w, h, g + r * 7, strong=False)
+
+                time.sleep(0.04)
+
+            time.sleep(0.10)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase C：中央门“打开”喷出彩色洪流（壮观的主戏）
+        # ==========================================================
+        mid = gate_count // 2
+        a = mid / max(1, gate_count - 1)
+        z_mid = far_z - a * z_span
+        w_mid = far_w + (near_w - far_w) * (a ** 1.25)
+        h_mid = far_h + (near_h - far_h) * (a ** 1.25)
+
+        # 先让中央门加亮一次（像锁扣解除）
+        draw_gate_frame(z_mid, w_mid, h_mid, brightness=14.0, depth_wobble=3.0)
+        pulse_gate_nodes(z_mid, w_mid, h_mid, 999, strong=True)
+        time.sleep(0.12)
+
+        flood_ticks = int(round(52 * intensity))
+        flood_ticks = max(36, flood_ticks)
+
+        for k in range(flood_ticks):
+            t = k / max(1, flood_ticks - 1)
+            surge = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            # 洪流密度（可控，强但不至于卡死）
+            shots = int(round((18 + 18 * intensity) * (0.75 + 0.45 * surge)))
+            shots = max(18, shots)
+
+            for i in range(shots):
+                # 从中央门内部区域发出：|x| < w_mid*0.25, |y| < h_mid*0.18
+                px = (rnd() * 2.0 - 1.0) * (w_mid * 0.25)
+                py = (rnd() * 2.0 - 1.0) * (h_mid * 0.18)
+                pz = z_mid + 0.18 * py + (rnd() * 2.0 - 1.0) * 2.0
+
+                # 速度：向观众方向“喷出”并扩散（这里用 vz 向 near_z 方向更负）
+                vx = (rnd() * 2.0 - 1.0) * (18.0 + 10.0 * surge)
+                vz = -(24.0 + 22.0 * surge) + (rnd() * 2.0 - 1.0) * 8.0
+                vy = clamp_vy(22.0 + 10.0 * intensity + 10.0 * surge)
+
+                # 彩色洪流：四种色域交织
+                pick = (k * 7 + i * 11) % 16
+                if pick < 4:
+                    col = FLOW_A
+                elif pick < 8:
+                    col = FLOW_B
+                elif pick < 12:
+                    col = FLOW_C
+                else:
+                    col = FLOW_D
+
+                # 主体用 nothing（更像“能量流”），少量用 circle 做光斑
+                if (i % 13 == 0) and (k % 3 == 0):
+                    fire((px, 0.0, pz), (vx * 0.25, clamp_vy(34.0 + 6.0 * intensity), vz * 0.25), T.circle, FRAME_WHITE)
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 12 == 0:
+                    time.sleep(0.002)
+
+            # 偶尔在门框角点加一圈“电弧节点”
+            if k % int(max(6, round(10 / max(0.7, intensity)))) == 0:
+                pulse_gate_nodes(z_mid, w_mid, h_mid, k, strong=False)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase D：全阵列过载同闪（所有门同时“通电”，但严格限量避免卡）
+        # ==========================================================
+        # 过载：每个门只炸一次（4角点），并且只给一半门做强闪，其余弱闪
+        for g in range(gate_count):
+            a = g / max(1, gate_count - 1)
+            z = far_z - a * z_span
+            w = far_w + (near_w - far_w) * (a ** 1.25)
+            h = far_h + (near_h - far_h) * (a ** 1.25)
+
+            strong = (g % 2 == 0)  # 只让一半门强闪
+            pulse_gate_nodes(z, w, h, 2000 + g, strong=strong)
+
+            # 最后再补一圈高光边（让“过载”像真的通电）
+            draw_gate_frame(z, w, h, brightness=(18.0 if strong else 8.0), depth_wobble=2.0)
+
+            time.sleep(0.03)
+
+        # 终极收束：中央一次金白合唱（少量爆闪，不是铺天盖地乱炸）
+        finale = int(round(70 * intensity))
+        finale = max(50, finale)
+
+        for i in range(finale):
+            th = (2.0 * math.pi) * (i / finale)
+            rad = 18.0 + 16.0 * rnd()
+
+            px = (rnd() * 2.0 - 1.0) * 6.0
+            pz = z_mid + (rnd() * 2.0 - 1.0) * 4.0
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(44.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            ftype = node_pool[i % len(node_pool)]
+            col = FRAME_WHITE if i % 3 == 0 else GOLD
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+
+    def climax_rift_canyon_panorama(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.6
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # -------------------------
+        # 配色（两套气质混合：深空紫蓝 + 熔流橙金）
+        # -------------------------
+        DEEP = (10, 16, 55)
+        INDIGO = (30, 70, 170)
+        CYAN = (70, 150, 255)
+        PURPLE = (190, 90, 255)
+
+        MAGMA = (255, 90, 40)
+        AMBER = (255, 160, 80)
+        GOLD = (255, 220, 120)
+        WHITEGOLD = (255, 245, 230)
+
+        EDGE_WHITE = (255, 250, 245)
+        EDGE_GOLD = (255, 230, 150)
+
+        burst_pool = [T.circle, T.double_ball, T.mixed_color_ball, T.planet_ball, T.planet_random_color, T.half_half_color_ball]
+
+        # -------------------------
+        # 舞台尺度（裂谷横向贯穿）
+        # -------------------------
+        XMAX = 110.0
+        Z0 = 6.0
+        ZSPAN = 56.0  # 内部翻涌的纵深范围
+
+        # 节奏
+        dt = 0.055 / max(0.7, intensity)
+
+        # 采样密度（可控）
+        edge_pts = int(round(60 * intensity))
+        edge_pts = max(46, edge_pts)
+
+        inner_pts = int(round(28 * intensity))
+        inner_pts = max(20, inner_pts)
+
+        # -------------------------
+        # 裂谷“中心线”形状：多频叠加，形成自然断层
+        # u in [-1,1] -> z offset
+        # -------------------------
+        def centerline_z(u, t):
+            # 大尺度弯曲 + 中尺度扭曲 + 小尺度锯齿
+            a1 = 10.0 * math.sin(1.15 * u * math.pi + 0.7 * t)
+            a2 = 6.0 * math.sin(3.2 * u * math.pi - 1.3 * t)
+            a3 = 2.6 * math.sin(10.0 * u * math.pi + 2.1 * t)
+            return Z0 + a1 + a2 + a3
+
+        # ==========================================================
+        # Phase 0：背景深空（淡铺，增强对比）
+        # ==========================================================
+        bg = int(round(50 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (XMAX * 0.55)
+            pz = Z0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.55)
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = DEEP if i % 3 else INDIGO
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 12 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.15)
+
+        # ==========================================================
+        # Phase 1：裂谷张开 + 边缘描边（白金断层线非常清晰）
+        # ==========================================================
+        open_ticks = int(round(46 * intensity))
+        open_ticks = max(34, open_ticks)
+
+        for k in range(open_ticks):
+            t = k / max(1, open_ticks - 1)
+            # 裂谷宽度：先迅速打开，再缓慢稳定
+            gap = 8.0 + 26.0 * (t ** 0.95)  # 总宽度
+            glow = 0.75 + 0.55 * math.sin(t * math.pi)
+
+            for i in range(edge_pts):
+                u = (i / max(1, edge_pts - 1)) * 2.0 - 1.0
+                x = u * XMAX
+                cz = centerline_z(u, t * 3.0)
+
+                # 两条边缘
+                zL = cz + gap * 0.5
+                zR = cz - gap * 0.5
+
+                # 边缘速度：轻微“撕裂外推” + 上扬（像断层冒光）
+                vx = (rnd() * 2.0 - 1.0) * 3.0
+                vz = (rnd() * 2.0 - 1.0) * 4.0
+                vy = clamp_vy(22.0 + 10.0 * glow + 6.0 * intensity)
+
+                col = EDGE_WHITE if (i % 7 == 0) else EDGE_GOLD
+                fire((x, 0.0, zL), (vx, vy, vz), T.nothing, col)
+                fire((x, 0.0, zR), (vx, vy, -vz), T.nothing, col)
+
+                # 少量“边缘火花”
+                if (k % 6 == 0) and (i % 13 == 0):
+                    ftype = T.circle
+                    fire((x, 0.0, cz), (vx * 0.3, clamp_vy(34.0 + 6.0 * intensity), vz * 0.3), ftype, WHITEGOLD)
+
+                if i % 12 == 0:
+                    time.sleep(0.0025)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：裂谷内部翻涌（星云/熔流湍动，不靠旋涡）
+        # ==========================================================
+        churn_ticks = int(round(64 * intensity))
+        churn_ticks = max(46, churn_ticks)
+
+        for k in range(churn_ticks):
+            t = k / max(1, churn_ticks - 1)
+            # 裂谷宽度维持，但会“呼吸”让内部更活
+            gap = 26.0 + 6.0 * math.sin(t * 2.0 * math.pi)
+            pulse = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            for i in range(inner_pts):
+                u = (rnd() * 2.0 - 1.0)
+                x = u * XMAX * (0.92 + 0.08 * rnd())
+                cz = centerline_z(u, 1.2 + t * 5.0)
+
+                # 在裂谷内部均匀取点：cz ± gap/2
+                z = cz + (rnd() * 2.0 - 1.0) * (gap * 0.48)
+
+                # 速度：向上为主，横向/纵向形成“湍流卷吸”的错觉
+                # 向中心线略聚拢（像被裂谷吸走）
+                pull = -(z - cz) * 0.22
+                vx = (rnd() * 2.0 - 1.0) * (10.0 + 6.0 * pulse)
+                vz = pull + (rnd() * 2.0 - 1.0) * (12.0 + 6.0 * pulse)
+                vy = clamp_vy(18.0 + 12.0 * pulse + 6.0 * intensity)
+
+                # 颜色策略：靠近中心线更亮/更热，外缘更冷/更深
+                dist = abs(z - cz) / max(1e-6, gap * 0.5)
+                rsel = rnd()
+                if dist < 0.35:
+                    col = WHITEGOLD if rsel < 0.12 else (GOLD if rsel < 0.45 else (AMBER if rsel < 0.75 else MAGMA))
+                else:
+                    col = PURPLE if rsel < 0.35 else (INDIGO if rsel < 0.70 else CYAN)
+
+                fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+                # 少量“翻涌节点”爆闪点睛（不多，不会卡）
+                if (k % 9 == 0) and (i % 11 == 0):
+                    ftype = burst_pool[(k + i) % len(burst_pool)]
+                    fire((x, 0.0, z), (vx * 0.25, clamp_vy(34.0 + 6.0 * intensity), vz * 0.25), ftype, WHITEGOLD)
+
+                if i % 12 == 0:
+                    time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 3：裂谷闭合（一道超亮“缝线”扫过，全屏都能看懂）
+        # ==========================================================
+        close_ticks = int(round(54 * intensity))
+        close_ticks = max(40, close_ticks)
+
+        for k in range(close_ticks):
+            t = k / max(1, close_ticks - 1)
+            # gap 从大到近似 0
+            gap = 26.0 * (1.0 - t) + 2.0
+            seam_glow = 0.90 + 0.65 * math.sin(t * math.pi)
+
+            # “闭合线”像扫描一样在 x 方向推进
+            x_scan = -XMAX * 0.95 + (XMAX * 1.90) * t
+
+            # 3A) 全局边缘随 gap 收拢
+            for i in range(int(round(edge_pts * 0.75))):
+                uu = (i / max(1, int(round(edge_pts * 0.75)) - 1)) * 2.0 - 1.0
+                x = uu * XMAX
+                cz = centerline_z(uu, 2.0 + t * 4.0)
+
+                zL = cz + gap * 0.5
+                zR = cz - gap * 0.5
+
+                vx = (rnd() * 2.0 - 1.0) * 3.0
+                vz = (rnd() * 2.0 - 1.0) * 4.0
+                vy = clamp_vy(24.0 + 10.0 * seam_glow + 6.0 * intensity)
+
+                col = EDGE_WHITE if i % 6 == 0 else EDGE_GOLD
+                fire((x, 0.0, zL), (vx, vy, vz), T.nothing, col)
+                fire((x, 0.0, zR), (vx, vy, -vz), T.nothing, col)
+
+            # 3B) 扫描缝线本体：在 x_scan 附近打一堵超亮线墙
+            seam_pts = int(round(26 + 18 * intensity))
+            for i in range(seam_pts):
+                pz = Z0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.62)
+                px = x_scan + (rnd() * 2.0 - 1.0) * (5.0 + 6.0 * (1.0 - t))
+                vx = (rnd() * 2.0 - 1.0) * 6.0
+                vz = (rnd() * 2.0 - 1.0) * 8.0
+                vy = clamp_vy(30.0 + 12.0 * seam_glow + 6.0 * intensity)
+
+                col = WHITEGOLD if i % 4 != 0 else EDGE_WHITE
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if (k % 8 == 0) and (i % 13 == 0):
+                    fire((px, 0.0, pz), (vx * 0.2, clamp_vy(40.0 + 6.0 * intensity), vz * 0.2), T.circle, WHITEGOLD)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 4：冲击波（闭合线爆出一圈波纹，壮观收束）
+        # ==========================================================
+        shock = int(round(96 * intensity))
+        shock = max(70, shock)
+
+        for i in range(shock):
+            th = (2.0 * math.pi) * (i / shock)
+            rad = 22.0 + 22.0 * rnd()
+
+            # 位置：沿中心线附近随机一点，让冲击波更“活”
+            u = (rnd() * 2.0 - 1.0) * 0.25
+            px0 = u * XMAX * 0.35
+            pz0 = centerline_z(u, 9.0) + (rnd() * 2.0 - 1.0) * 3.0
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(46.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            # 绝大多数用 nothing 形成“波纹线”，少量用爆闪做“波峰”
+            if i % 9 == 0:
+                ftype = burst_pool[i % len(burst_pool)]
+                col = WHITEGOLD if i % 18 != 0 else GOLD
+                fire((px0, 0.0, pz0), (vx, vy, vz), ftype, col)
+            else:
+                col = EDGE_WHITE if i % 4 == 0 else EDGE_GOLD
+                fire((px0, 0.0, pz0), (vx, vy, vz), T.nothing, col)
+
+            if i % 12 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.25)
+
+
+    def climax_aurora_cathedral(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.05
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 极光调色板（青绿 -> 青蓝 -> 紫辉，少量金白电光）
+        AUR_GREEN = (70, 255, 170)
+        AUR_MINT  = (90, 240, 210)
+        AUR_CYAN  = (70, 210, 255)
+        AUR_BLUE  = (60, 120, 255)
+        AUR_PURP  = (190, 90, 255)
+        AUR_WHITE = (255, 245, 230)
+        AUR_GOLD  = (255, 220, 120)
+
+        # 舞台尺度（很大）
+        XMAX = 40.0
+        Z0 = 10.0
+        ZSPAN = 62.0
+
+        # 节奏/密度（intensity 越大越密）
+        dt = 0.055 / max(0.7, intensity)
+        ticks = int(round(150 * intensity))   # 约 8~12 秒级（随 intensity）
+        ticks = max(60, ticks)
+
+        ribbons = int(round(9 + 5 * intensity))   # 极光帘“主带”数量
+        ribbons = max(5, ribbons)
+
+        strands_per_ribbon = int(round(10 + 10 * intensity))  # 每条主带的竖向丝数
+        strands_per_ribbon = max(6, strands_per_ribbon)
+
+        particles_per_tick = int(round(10 + 10 * intensity))  # 帘面“雾化颗粒”
+        particles_per_tick = max(5, particles_per_tick)
+
+        # ---------------------------------------------------------
+        # 工具：给定 x 与时间，生成极光帘的“中心线 z”
+        # （多频叠加，形成自然飘动的带状波）
+        # ---------------------------------------------------------
+        def aurora_center_z(xn, t, layer_phase):
+            # xn: x / XMAX in [-1,1]
+            a1 = 14.0 * math.sin(0.9 * xn * math.pi + 0.8 * t + layer_phase)
+            a2 = 7.0  * math.sin(2.6 * xn * math.pi - 1.1 * t + 0.7 * layer_phase)
+            a3 = 2.0  * math.sin(9.0 * xn * math.pi + 2.0 * t)
+            return Z0 + a1 + a2 + a3
+
+        # ---------------------------------------------------------
+        # 工具：极光颜色（随高度/相位渐变）
+        # ---------------------------------------------------------
+        def aurora_color(phase, depth, sparkle=False):
+            # depth: 0 近景更亮，1 远景更冷
+            p = (phase % 1.0)
+            if p < 0.20:
+                col = AUR_GREEN
+            elif p < 0.40:
+                col = AUR_MINT
+            elif p < 0.60:
+                col = AUR_CYAN
+            elif p < 0.80:
+                col = AUR_BLUE
+            else:
+                col = AUR_PURP
+
+            if depth > 0.6:  # 远景稍暗冷
+                if col == AUR_GREEN: col = AUR_MINT
+                if col == AUR_MINT:  col = AUR_CYAN
+
+            if sparkle:
+                return AUR_WHITE if (rnd() < 0.7) else AUR_GOLD
+            return col
+
+        # =========================================================
+        # Phase 0：先铺一层“冷色天空薄雾”（让极光更立体）
+        # =========================================================
+        bg = int(round(40 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (XMAX * 0.55)
+            pz = Z0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.55)
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = (20, 40, 90) if i % 3 else (40, 90, 170)
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 12 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # =========================================================
+        # Phase 1：极光帘幕主戏（两层：近景厚、远景薄；整体左右漂移）
+        # =========================================================
+        for k in range(ticks):
+            t = k * dt
+            breath = 0.75 + 0.55 * math.sin(t * 0.85)   # 呼吸亮度
+            drift = 14.0 * math.sin(t * 0.25)           # 整体左右漂移（很慢）
+
+            # 两层：depth=0 近景，depth=1 远景
+            for depth in (0, 1):
+                layer_phase = 1.7 if depth == 0 else -0.8
+                layer_scale = 1.0 if depth == 0 else 0.78
+                z_depth_shift = (-10.0 if depth == 0 else +14.0)  # 前后景分离
+
+                # 每层的主带中心 x 坐标（均匀分布，但每条带有独立摆动）
+                for r in range(ribbons):
+                    u = (r / max(1, ribbons - 1)) * 2.0 - 1.0
+                    x_center = u * (XMAX * 0.75) + drift * (0.35 if depth == 0 else 0.20)
+                    # 每条主带有独立轻微游走
+                    x_center += 10.0 * math.sin(t * (0.35 + 0.05 * r) + r * 0.9) * (0.65 if depth == 0 else 0.45)
+
+                    # “帘”宽度：近景更宽更厚
+                    width = (10.0 + 8.0 * (1.0 - abs(u))) * (1.15 if depth == 0 else 0.85)
+
+                    # 帘面竖向丝：在 x_center 附近取多条线
+                    for s in range(strands_per_ribbon):
+                        sx = x_center + (rnd() * 2.0 - 1.0) * width
+                        xn = max(-1.0, min(1.0, sx / XMAX))
+                        cz = aurora_center_z(xn, t, layer_phase) + z_depth_shift
+
+                        # 竖向丝的局部“摆幅”（形成清晰丝带纹）
+                        ripple = 6.0 * math.sin(t * 1.6 + sx * 0.03 + r * 0.7)
+                        pz = cz + ripple * (0.75 if depth == 0 else 0.55)
+
+                        # 速度：上升为主，横向轻微摆动（像帘在风里飘）
+                        vx = (rnd() * 2.0 - 1.0) * 6.0 + 8.0 * math.sin(t * 0.55 + r) * layer_scale
+                        vz = (rnd() * 2.0 - 1.0) * 7.0 + 6.0 * math.cos(t * 0.60 + s * 0.2) * layer_scale
+                        vy = clamp_vy((22.0 + 10.0 * breath) * layer_scale + 6.0 * intensity + 4.0 * max(0.0, math.sin(t + s * 0.08)))
+
+                        # 颜色：沿时间相位流动，近景更亮
+                        phase = (0.12 * r + 0.03 * s + 0.18 * t) % 1.0
+                        col = aurora_color(phase, depth * 0.8, sparkle=False)
+
+                        # 偶尔做“电光闪烁丝”（很少，但极光会更灵）
+                        if (k % 8 == 0) and (s % 11 == 0) and (rnd() < 0.35):
+                            col2 = aurora_color(phase, depth * 0.8, sparkle=True)
+                            fire((sx, 0.0, pz), (vx * 0.6, clamp_vy(34.0 + 6.0 * intensity), vz * 0.6), T.circle, col2)
+
+                        fire((sx, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 每条主带偶尔补一些“雾化粒子”，让帘面更丰满
+                    if (r % 2 == 0) and (k % 2 == 0):
+                        for i in range(max(2, particles_per_tick // (3 if depth == 0 else 4))):
+                            sx = x_center + (rnd() * 2.0 - 1.0) * (width * 1.3)
+                            xn = max(-1.0, min(1.0, sx / XMAX))
+                            cz = aurora_center_z(xn, t, layer_phase) + z_depth_shift
+                            pz = cz + (rnd() * 2.0 - 1.0) * 10.0
+
+                            vx = (rnd() * 2.0 - 1.0) * 8.0
+                            vz = (rnd() * 2.0 - 1.0) * 10.0
+                            vy = clamp_vy(18.0 + 8.0 * breath + 6.0 * intensity)
+
+                            phase = (0.2 * t + rnd()) % 1.0
+                            col = aurora_color(phase, depth * 0.8, sparkle=False)
+                            fire((sx, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(dt)
+
+        time.sleep(0.22)
+
+        # =========================================================
+        # Phase 2：极光冠冕收束（顶部一圈“冠状高亮”，壮观但不狂炸）
+        # =========================================================
+        crown = int(round(120 * intensity))
+        crown = max(60, crown)
+
+        for i in range(crown):
+            th = (2.0 * math.pi) * (i / crown)
+            # 冠冕不是标准圆：做“尖瓣”起伏
+            rad = 34.0 + 18.0 * (0.5 + 0.5 * math.sin(7.0 * th)) + 10.0 * rnd()
+
+            px = math.cos(th) * rad
+            pz = Z0 + 22.0 + math.sin(th) * (rad * 0.55)
+
+            vx = math.cos(th) * (18.0 + 14.0 * rnd())
+            vz = math.sin(th) * (22.0 + 16.0 * rnd())
+            vy = clamp_vy(44.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            # 颜色：金白为主，夹青蓝/紫辉
+            if i % 5 == 0:
+                col = AUR_WHITE
+                ftype = T.circle
+            elif i % 5 == 1:
+                col = AUR_GOLD
+                ftype = T.circle
+            else:
+                col = [AUR_CYAN, AUR_BLUE, AUR_PURP, AUR_MINT][i % 4]
+                ftype = T.nothing
+
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 12 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.25)
+
+
+    def climax_romantic_binary_constellation(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.6, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 浪漫调色板（香槟金/暖粉/玫瑰紫/象牙白）
+        IVORY = (255, 245, 230)
+        CHAMPAGNE = (255, 230, 170)
+        GOLD = (255, 220, 120)
+        ROSE = (255, 120, 200)
+        LILAC = (210, 140, 255)
+        DEEP_ROSE = (170, 70, 160)
+
+        # 点睛类型（少量）
+        jewel_pool = [T.circle, T.double_ball, T.mixed_color_ball, T.half_half_color_ball, T.planet_ball]
+
+        # 舞台尺度（温柔但大）
+        XW = 90.0
+        ZW = 60.0
+        Z0 = 8.0
+
+        dt = 0.06 / max(0.7, intensity)
+
+        # ==========================================================
+        # Phase 0：柔和星尘底（暖色薄雾，营造氛围）
+        # ==========================================================
+        bg = int(round(55 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (XW * 0.55)
+            pz = Z0 + (rnd() * 2.0 - 1.0) * (ZW * 0.45)
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = CHAMPAGNE if i % 3 else IVORY
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 12 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：双星登场（左右各一颗“恋人星”拉出柔光轨迹）
+        # ==========================================================
+        trail_ticks = int(round(72 * intensity))
+        trail_ticks = max(54, trail_ticks)
+
+        for k in range(trail_ticks):
+            t = k / max(1, trail_ticks - 1)
+            breathe = 0.75 + 0.55 * math.sin(t * math.pi)
+
+            # 左星与右星的“轨迹中心”缓慢向中间靠拢，同时在 z 上轻微错位（立体感）
+            left_x  = -XW * 0.75 + (XW * 0.50) * (t ** 1.05)
+            right_x =  XW * 0.75 - (XW * 0.50) * (t ** 1.05)
+            left_z  = Z0 - 10.0 + 8.0 * math.sin(t * 2.2)
+            right_z = Z0 + 10.0 - 8.0 * math.sin(t * 2.2 + 0.7)
+
+            # 每帧每颗星拉一束“丝带光轨”（多条 T.nothing 形成柔和体积）
+            strands = int(round(10 + 10 * intensity))
+            strands = max(10, strands)
+
+            for s in range(strands):
+                # 左侧丝带
+                px = left_x + (rnd() * 2.0 - 1.0) * (7.0 + 4.0 * (1.0 - t))
+                pz = left_z + (rnd() * 2.0 - 1.0) * (6.0 + 4.0 * (1.0 - t))
+
+                # 速度：向上为主 + 向中间的温柔牵引
+                vx = (0.0 - px) * 0.12 + (rnd() * 2.0 - 1.0) * 6.0
+                vz = (Z0 - pz) * 0.06 + (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(20.0 + 10.0 * breathe + 6.0 * intensity)
+
+                col = ROSE if s % 4 == 0 else (CHAMPAGNE if s % 2 == 0 else IVORY)
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                # 右侧丝带
+                px = right_x + (rnd() * 2.0 - 1.0) * (7.0 + 4.0 * (1.0 - t))
+                pz = right_z + (rnd() * 2.0 - 1.0) * (6.0 + 4.0 * (1.0 - t))
+
+                vx = (0.0 - px) * 0.12 + (rnd() * 2.0 - 1.0) * 6.0
+                vz = (Z0 - pz) * 0.06 + (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(20.0 + 10.0 * breathe + 6.0 * intensity)
+
+                col = LILAC if s % 4 == 1 else (CHAMPAGNE if s % 2 == 0 else IVORY)
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if s % 10 == 0:
+                    time.sleep(0.002)
+
+            # 每隔一小段给左右星各一个“柔光星点”
+            if k % int(max(6, round(10 / max(0.7, intensity)))) == 0:
+                fire((left_x, 0.0, left_z), (0.0, clamp_vy(34.0), 0.0), T.circle, IVORY)
+                fire((right_x, 0.0, right_z), (0.0, clamp_vy(34.0), 0.0), T.circle, IVORY)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：中央交汇“心跳脉冲”（短、克制、但很抓人）
+        # ==========================================================
+        heartbeats = 3
+        for hb in range(heartbeats):
+            # 每次心跳：先柔光聚拢，再一次亮点爆闪
+            burst = int(round(36 * intensity))
+            for i in range(burst):
+                th = (2.0 * math.pi) * (i / burst)
+                rad = 18.0 + 14.0 * rnd()
+
+                px = (rnd() * 2.0 - 1.0) * 4.0
+                pz = Z0 + (rnd() * 2.0 - 1.0) * 4.0
+
+                vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 4.0
+                vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+                vy = clamp_vy(42.0 + 8.0 * rnd() + 6.0 * intensity)
+
+                # 心跳色：香槟金与玫瑰粉交替
+                col = GOLD if (i % 3 == 0) else (ROSE if (i % 3 == 1) else IVORY)
+
+                # 大部分用 nothing 做光浪，少量用 jewel 做脉冲点
+                if i % 8 == 0:
+                    ftype = jewel_pool[i % len(jewel_pool)]
+                else:
+                    ftype = T.nothing
+
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 12 == 0:
+                    time.sleep(0.004)
+
+            # 只用一次小爱心（避免俗套与重复）
+            if hb == 1:
+                fire((0.0, 0.0, Z0), (0.0, clamp_vy(36.0), 0.0), T.love_3D, ROSE)
+
+            time.sleep(0.25)
+
+        time.sleep(0.15)
+
+        # ==========================================================
+        # Phase 3：香槟玫瑰星尘雨（很大、很温柔、很壮观的收束）
+        # ==========================================================
+        rain = int(round(160 * intensity))
+        rain = max(120, rain)
+
+        for i in range(rain):
+            # 从一个很大的“玫瑰云团”散开：中心在上方略靠后
+            px = (rnd() * 2.0 - 1.0) * (XW * 0.55)
+            pz = Z0 + 18.0 + (rnd() * 2.0 - 1.0) * (ZW * 0.35)
+
+            th = (2.0 * math.pi) * rnd()
+            rad = 12.0 + 22.0 * rnd()
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(34.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            # 颜色：玫瑰/丁香/香槟/象牙交织，偶尔深玫瑰做层次
+            mod = i % 10
+            if mod == 0:
+                col = IVORY
+            elif mod in (1, 2, 3):
+                col = CHAMPAGNE
+            elif mod in (4, 5, 6):
+                col = ROSE
+            elif mod in (7, 8):
+                col = LILAC
+            else:
+                col = DEEP_ROSE
+
+            # 爆炸类型少量点睛，其余全部是光轨
+            if i % 14 == 0:
+                ftype = jewel_pool[i % len(jewel_pool)]
+            else:
+                ftype = T.nothing
+
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 14 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.25)
+
+
+    def climax_romantic_moonlit_vows(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.6, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 配色：月光银白 + 香槟金高光 + 玫瑰粉/淡紫点缀
+        MOON_WHITE = (245, 250, 255)
+        SILVER = (210, 225, 245)
+        CHAMPAGNE = (255, 230, 170)
+        GOLD = (255, 220, 120)
+        ROSE = (255, 120, 200)
+        LILAC = (210, 140, 255)
+        DEEP_BLUE = (10, 16, 55)
+
+        jewel_pool = [T.circle, T.double_ball, T.mixed_color_ball, T.half_half_color_ball, T.planet_ball]
+
+        # 舞台尺度
+        XMAX = 95.0
+        Z0 = 10.0
+        ZSPAN = 62.0
+
+        dt = 0.055 / max(0.7, intensity)
+
+        # ==========================================================
+        # Phase 0：静谧夜空薄雾（很淡）
+        # ==========================================================
+        bg = int(round(45 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (XMAX * 0.55)
+            pz = Z0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.45)
+            vx = (rnd() * 2.0 - 1.0) * 3.5
+            vz = (rnd() * 2.0 - 1.0) * 3.5
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = DEEP_BLUE if i % 3 else SILVER
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 12 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：月光拱廊（左右两侧一排排拱门点亮，像仪式感场景）
+        # ==========================================================
+        arcade = int(round(8 + 4 * intensity))   # 拱门数量
+        arcade = max(8, arcade)
+
+        arch_pts = int(round(18 * intensity))
+        arch_pts = max(14, arch_pts)
+
+        for a in range(arcade):
+            t = a / max(1, arcade - 1)
+            # 拱门越靠后越小（纵深）
+            scale = 0.55 + 0.75 * (1.0 - t)
+            z_gate = Z0 + 18.0 + t * 28.0
+
+            # 左右各一个拱门中心
+            centers = [(-XMAX * (0.62 + 0.05 * math.sin(a)), z_gate),
+                    ( XMAX * (0.62 + 0.05 * math.cos(a)), z_gate)]
+
+            for (cx, cz) in centers:
+                # 画半拱：参数 theta 从 0..pi
+                for i in range(arch_pts):
+                    th = math.pi * (i / max(1, arch_pts - 1))
+                    rad = (18.0 + 10.0 * t) * scale
+
+                    px = cx + math.cos(th) * rad
+                    pz = cz + math.sin(th) * (rad * 0.85)
+
+                    # 速度：轻柔向上 + 微微向内（像月光拱门在“亮起来”）
+                    vx = (-cx) * 0.02 + (rnd() * 2.0 - 1.0) * 2.2
+                    vz = (Z0 - pz) * 0.01 + (rnd() * 2.0 - 1.0) * 2.2
+                    vy = clamp_vy(18.0 + 8.0 * intensity + 4.0 * (1.0 - abs(math.cos(th))))
+
+                    # 银白为主，偶尔香槟金高光
+                    col = CHAMPAGNE if ((a + i) % 7 == 0) else (MOON_WHITE if i % 3 else SILVER)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                # 拱门“灯点”少量点睛
+                if a % 2 == 0:
+                    fire((cx, 0.0, cz), (0.0, clamp_vy(30.0), 0.0), T.circle, MOON_WHITE)
+
+            time.sleep(0.09)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 2：誓言光线（中央一条优雅的弧形光轨被“写”出来）
+        # ==========================================================
+        vow_ticks = int(round(54 * intensity))
+        vow_ticks = max(40, vow_ticks)
+
+        for k in range(vow_ticks):
+            t = k / max(1, vow_ticks - 1)
+            # 弧线：从左下到右上（像一笔写出的誓言）
+            x = -XMAX * 0.35 + (XMAX * 0.70) * t
+            z = Z0 - 6.0 + 32.0 * math.sin(t * math.pi)  # 中间抬高
+
+            # 光线厚度：多条丝并排
+            strands = int(round(10 + 8 * intensity))
+            for s in range(strands):
+                px = x + (rnd() * 2.0 - 1.0) * 2.4
+                pz = z + (rnd() * 2.0 - 1.0) * 2.6
+
+                # 速度：沿弧线方向推进 + 上扬
+                vx = (XMAX * 0.70) * 0.12 + (rnd() * 2.0 - 1.0) * 3.0
+                vz = (math.cos(t * math.pi)) * 10.0 + (rnd() * 2.0 - 1.0) * 4.0
+                vy = clamp_vy(22.0 + 10.0 * intensity + 8.0 * (0.5 + 0.5 * math.sin(t * math.pi)))
+
+                # 颜色：银白->香槟金->玫瑰点缀
+                if s % 9 == 0:
+                    col = ROSE
+                elif s % 4 == 0:
+                    col = CHAMPAGNE
+                else:
+                    col = MOON_WHITE
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            # 弧线端点轻闪一下（像笔尖的光）
+            if k % 10 == 0:
+                fire((x, 0.0, z), (0.0, clamp_vy(34.0), 0.0), T.circle, MOON_WHITE)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：月冠轻闪 + 花瓣星尘雨（温柔的大收束）
+        # ==========================================================
+        # 3A 月冠（很克制的高光，不炸满）
+        crown = int(round(48 * intensity))
+        crown = max(36, crown)
+        for i in range(crown):
+            th = (2.0 * math.pi) * (i / crown)
+            rad = 26.0 + 14.0 * (0.5 + 0.5 * math.sin(5.0 * th)) + 6.0 * rnd()
+
+            px = math.cos(th) * rad
+            pz = Z0 + 36.0 + math.sin(th) * (rad * 0.55)
+
+            vx = math.cos(th) * (14.0 + 10.0 * rnd())
+            vz = math.sin(th) * (16.0 + 12.0 * rnd())
+            vy = clamp_vy(40.0 + 8.0 * rnd() + 6.0 * intensity)
+
+            col = MOON_WHITE if i % 3 else GOLD
+            ftype = T.circle if i % 4 == 0 else T.nothing
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.20)
+
+        # 3B 花瓣星尘雨（多是光轨，少量宝石点）
+        rain = int(round(140 * intensity))
+        rain = max(110, rain)
+
+        for i in range(rain):
+            # 从上方较大的云团散落
+            px = (rnd() * 2.0 - 1.0) * (XMAX * 0.55)
+            pz = Z0 + 22.0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.35)
+
+            th = (2.0 * math.pi) * rnd()
+            rad = 10.0 + 18.0 * rnd()
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 5.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 9.0
+            vy = clamp_vy(30.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            mod = i % 12
+            if mod in (0, 1, 2):
+                col = MOON_WHITE
+            elif mod in (3, 4, 5):
+                col = CHAMPAGNE
+            elif mod in (6, 7):
+                col = ROSE
+            elif mod in (8, 9):
+                col = LILAC
+            else:
+                col = SILVER
+
+            ftype = jewel_pool[i % len(jewel_pool)] if (i % 16 == 0) else T.nothing
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 14 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.25)
+
+
+    def climax_dream_bubble_nebula(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.6, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 梦幻粉彩调色板（偏柔、偏雾）
+        MIST = (235, 245, 255)
+        MOON = (255, 245, 235)
+        PEARL = (255, 250, 245)
+
+        PINK = (255, 160, 210)
+        LILAC = (210, 160, 255)
+        SKY = (150, 210, 255)
+        MINT = (160, 255, 220)
+        SOFT_GOLD = (255, 230, 170)
+
+        # 少量点睛类型（克制）
+        sparkle_pool = [T.circle, T.planet_ball, T.planet_random_color, T.mixed_color_ball]
+
+        # 舞台尺度（大而飘）
+        XMAX = 105.0
+        Z0 = 10.0
+        ZSPAN = 70.0
+
+        dt = 0.055 / max(0.7, intensity)
+
+        # ==========================================================
+        # Phase 0：梦雾底（柔和薄雾星尘，建立“梦境空气感”）
+        # ==========================================================
+        bg = int(round(70 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (XMAX * 0.60)
+            pz = Z0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.55)
+
+            vx = (rnd() * 2.0 - 1.0) * 3.5
+            vz = (rnd() * 2.0 - 1.0) * 3.5
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+
+            col = MIST if i % 3 else MOON
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            if i % 14 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：梦泡上升（“泡群”从多个源点升起，每个泡都有外圈光晕）
+        # ==========================================================
+        bubble_sources = int(round(7 + 3 * intensity))
+        bubble_sources = max(7, bubble_sources)
+
+        # 固定几个梦泡源点（左右+前后），避免重复感
+        sources = []
+        for i in range(bubble_sources):
+            x = ( (i / max(1, bubble_sources - 1)) * 2.0 - 1.0 ) * (XMAX * 0.65)
+            # 源点在纵深上交错
+            z = Z0 - 18.0 + (i % 3) * 10.0 + (rnd() * 2.0 - 1.0) * 6.0
+            sources.append((x, z))
+
+        rise_ticks = int(round(78 * intensity))
+        rise_ticks = max(58, rise_ticks)
+
+        for k in range(rise_ticks):
+            t = k / max(1, rise_ticks - 1)
+            breathe = 0.75 + 0.55 * math.sin(t * math.pi)
+
+            # 每帧挑几个源点发泡（控制性能）
+            launches = int(round(3 + 2 * intensity))
+            for li in range(launches):
+                sx, sz = sources[(k + li * 2) % len(sources)]
+
+                # 泡的“大小”与颜色
+                bubble_r = 10.0 + 16.0 * rnd()
+                palette = [PINK, LILAC, SKY, MINT, SOFT_GOLD]
+                base_col = palette[(k + li) % len(palette)]
+
+                # 泡的外圈：用若干条 T.nothing 向四周轻轻散开 + 上升，形成“泡”的错觉
+                ring_pts = int(round(12 + 8 * intensity))
+                for i in range(ring_pts):
+                    th = (2.0 * math.pi) * (i / ring_pts)
+                    # 发射位置在源点附近（泡的起点）
+                    px = sx + (rnd() * 2.0 - 1.0) * 2.5
+                    pz = sz + (rnd() * 2.0 - 1.0) * 2.5
+
+                    # 速度：环向扩散 + 上升（泡越大扩散越大）
+                    vx = math.cos(th) * (0.55 * bubble_r) + (rnd() * 2.0 - 1.0) * 3.0
+                    vz = math.sin(th) * (0.55 * bubble_r) + (rnd() * 2.0 - 1.0) * 4.0
+                    vy = clamp_vy(20.0 + 10.0 * breathe + 6.0 * intensity + 4.0 * rnd())
+
+                    # 外圈颜色：同色系，但偶尔用珍珠白高光
+                    col = PEARL if (i % 5 == 0 and rnd() < 0.5) else base_col
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 少量“泡面闪点”（很克制）
+                    if (k % 10 == 0) and (i % 6 == 0) and (rnd() < 0.25):
+                        fire((px, 0.0, pz),
+                            (vx * 0.25, clamp_vy(34.0 + 6.0 * intensity), vz * 0.25),
+                            T.circle, PEARL)
+
+                time.sleep(0.01)
+
+            # 轻雾补充：让泡群之间不空
+            fog = int(round(6 + 6 * intensity))
+            for i in range(fog):
+                px = (rnd() * 2.0 - 1.0) * (XMAX * 0.55)
+                pz = Z0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.45)
+                vx = (rnd() * 2.0 - 1.0) * 5.0
+                vz = (rnd() * 2.0 - 1.0) * 5.0
+                vy = clamp_vy(16.0 + 8.0 * breathe + 6.0 * intensity)
+                col = MIST if i % 2 == 0 else MOON
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：缎带彗光穿过泡群（两三条“丝带”横跨天空，非常梦幻）
+        # ==========================================================
+        ribbon_ticks = int(round(48 * intensity))
+        ribbon_ticks = max(34, ribbon_ticks)
+
+        for k in range(ribbon_ticks):
+            t = k / max(1, ribbon_ticks - 1)
+            pulse = 0.85 + 0.55 * math.sin(t * math.pi)
+
+            # 两条丝带：一条偏上、一条偏下，z 深度不同（3D层次）
+            for band in (0, 1):
+                z_band = Z0 + (22.0 if band == 0 else -2.0) + (8.0 * math.sin(2.2 * t + band))
+                z_band += (18.0 if band == 0 else -16.0)  # 前后层分离
+
+                # 丝带沿 x 方向推进
+                x_head = -XMAX * 0.95 + (XMAX * 1.90) * t
+                width = 12.0 + 10.0 * (0.5 + 0.5 * math.sin(t * math.pi))
+
+                ribbons = int(round(18 + 12 * intensity))
+                for i in range(ribbons):
+                    px = x_head + (rnd() * 2.0 - 1.0) * width
+                    pz = z_band + (rnd() * 2.0 - 1.0) * 10.0
+
+                    # 速度：强烈横向 + 上升，形成长飘带
+                    vx = (22.0 + 16.0 * pulse) + (rnd() * 2.0 - 1.0) * 6.0
+                    vz = (rnd() * 2.0 - 1.0) * (12.0 + 6.0 * pulse)
+                    vy = clamp_vy(22.0 + 10.0 * intensity + 8.0 * pulse)
+
+                    # 丝带颜色：偏冷（梦幻）+ 少量金粉
+                    col = [SKY, LILAC, MINT, PEARL, SOFT_GOLD][(i + band) % 5]
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 丝带上偶尔出现“彗光结点”
+                    if (k % 9 == 0) and (i % 11 == 0):
+                        ftype = sparkle_pool[(k + i) % len(sparkle_pool)]
+                        fire((px, 0.0, pz),
+                            (vx * 0.25, clamp_vy(36.0 + 6.0 * intensity), vz * 0.25),
+                            ftype, PEARL)
+
+                    if i % 12 == 0:
+                        time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：梦泡“无声破裂”成柔光环 + 星尘雨（温柔高潮）
+        # ==========================================================
+        pop = int(round(160 * intensity))
+        pop = max(120, pop)
+
+        for i in range(pop):
+            # 破裂点分布在上方较大区域
+            px0 = (rnd() * 2.0 - 1.0) * (XMAX * 0.60)
+            pz0 = Z0 + 22.0 + (rnd() * 2.0 - 1.0) * (ZSPAN * 0.45)
+
+            th = (2.0 * math.pi) * rnd()
+            rad = 14.0 + 22.0 * rnd()
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(34.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            # 色彩：粉彩交织，珍珠白高光更梦幻
+            mod = i % 11
+            if mod in (0, 1):
+                col = PEARL
+            elif mod in (2, 3):
+                col = SKY
+            elif mod in (4, 5):
+                col = LILAC
+            elif mod in (6, 7):
+                col = MINT
+            elif mod == 8:
+                col = SOFT_GOLD
+            else:
+                col = PINK
+
+            # 大多数用 nothing 做“破裂波纹”，少量用 circle 做“轻响”点睛
+            if i % 15 == 0:
+                ftype = sparkle_pool[i % len(sparkle_pool)]
+                fire((px0, 0.0, pz0), (vx, vy, vz), ftype, col)
+            else:
+                fire((px0, 0.0, pz0), (vx, vy, vz), T.nothing, col)
+
+            if i % 14 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.25)
+
+    def climax_whirlwind_tornado(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.5
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else MIN_VY
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 风暴配色：冷青电光 + 风尘灰蓝 + 少量金白碎片
+        STORM_CYAN = (120, 220, 255)
+        STORM_BLUE = (60, 120, 255)
+        DUST_1 = (180, 195, 220)
+        DUST_2 = (130, 150, 190)
+        DEEP = (10, 16, 55)
+        WHITE = (255, 245, 230)
+        GOLD = (255, 220, 120)
+
+        sparkle_pool = [T.circle, T.planet_ball, T.planet_random_color, T.double_ball, T.mixed_color_ball]
+
+        # 舞台尺度
+        XMAX = 90.0
+        ZMAX = 70.0
+        Z0 = 10.0
+
+        dt = 0.055 / max(0.7, intensity)
+
+        # 旋风参数（底部半径大、顶部半径小）
+        R0 = 46.0           # 底部半径
+        R1 = 10.0           # 顶部半径（形成漏斗）
+        HEIGHT = 88.0       # 用 vy 表达的“上升高度感”
+        TWIST = 7.2         # 扭转强度（越大越“卷”）
+
+        # 密度
+        warm_ticks = int(round(30 * intensity))
+        warm_ticks = max(24, warm_ticks)
+
+        funnel_ticks = int(round(120 * intensity))   # 主体时长（约 7~12 秒）
+        funnel_ticks = max(90, funnel_ticks)
+
+        climax_ticks = int(round(34 * intensity))
+        climax_ticks = max(26, climax_ticks)
+
+        strands = int(round(26 + 22 * intensity))    # 每帧发射的风丝数量
+        strands = max(28, strands)
+
+        debris = int(round(6 + 6 * intensity))       # 每帧碎片点睛数量
+        debris = max(6, debris)
+
+        # ==========================================================
+        # Phase 0：暗场风尘底（让旋风更立体）
+        # ==========================================================
+        bg = int(round(60 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (XMAX * 0.55)
+            pz = Z0 + (rnd() * 2.0 - 1.0) * (ZMAX * 0.55)
+            vx = (rnd() * 2.0 - 1.0) * 4.0
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            col = DEEP if i % 3 else DUST_2
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+            if i % 14 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 1：集风（地面气流从四周向中心汇聚，旋风将起）
+        # ==========================================================
+        for k in range(warm_ticks):
+            t = k / max(1, warm_ticks - 1)
+            pull = 0.25 + 0.35 * t
+
+            shots = int(round(18 + 14 * intensity))
+            for i in range(shots):
+                # 从外围来
+                ang = 2.0 * math.pi * rnd()
+                rad = (R0 * 1.05) + 18.0 * rnd()
+                px = math.cos(ang) * rad
+                pz = Z0 + math.sin(ang) * rad
+
+                # 向中心吸 + 微旋转偏置
+                vx = (-px) * pull + (-math.sin(ang)) * (10.0 + 10.0 * t) + (rnd() * 2.0 - 1.0) * 3.0
+                vz = (-(pz - Z0)) * pull + ( math.cos(ang)) * (10.0 + 10.0 * t) + (rnd() * 2.0 - 1.0) * 3.0
+                vy = clamp_vy(18.0 + 8.0 * intensity + 6.0 * t)
+
+                col = DUST_1 if i % 3 else STORM_CYAN
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 14 == 0:
+                    time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：漏斗成形（真正 3D：不同“高度层”半径不同，形成锥体）
+        # 思路：每帧取多条“风丝”，给它一个高度参数 h（0..1），
+        # 半径从 R0 -> R1 收缩，角度随时间+高度扭转（TWIST），
+        # 再用切向速度制造旋转，用径向速度制造吸入，用 vy 抬升。
+        # ==========================================================
+        for k in range(funnel_ticks):
+            t = k / max(1, funnel_ticks - 1)
+            # 呼吸：让漏斗像活的一样
+            breathe = 0.78 + 0.55 * math.sin(t * math.pi)
+
+            # 漏斗整体轻微漂移（避免太“死板”）
+            drift_x = 8.0 * math.sin(t * 1.2)
+            drift_z = 6.0 * math.cos(t * 1.05)
+
+            for i in range(strands):
+                # 高度层 h：0(底) -> 1(顶)
+                h = (rnd() ** 0.65)  # 偏向底部更密（更像龙卷风）
+                # 半径随高度收缩
+                r = (R0 + (R1 - R0) * (h ** 1.15)) * (0.92 + 0.18 * rnd())
+
+                # 角度：随时间推进 + 高度扭转（形成“螺旋上卷”的视觉）
+                ang = (2.0 * math.pi) * (rnd() + 0.35 * t) + TWIST * h + 1.7 * math.sin(t * 2.0 + h * 3.0)
+
+                px = drift_x + math.cos(ang) * r
+                pz = Z0 + drift_z + math.sin(ang) * r
+
+                # 切向方向（旋转）
+                tx = -math.sin(ang)
+                tz =  math.cos(ang)
+
+                # 径向方向（吸入）
+                rx = -math.cos(ang)
+                rz = -math.sin(ang)
+
+                # 速度分解：旋转 + 吸入 + 少量抖动
+                spin = (26.0 + 28.0 * breathe) * (0.55 + 0.75 * (1.0 - h))  # 底部更猛
+                suck = (10.0 + 18.0 * breathe) * (0.35 + 0.65 * h)          # 越高越吸紧
+
+                vx = tx * spin + rx * suck + (rnd() * 2.0 - 1.0) * 4.0
+                vz = tz * spin + rz * suck + (rnd() * 2.0 - 1.0) * 6.0
+
+                # vy：高度越高越“轻”，但永远 > 0
+                vy = clamp_vy(18.0 + 18.0 * intensity + (26.0 * h) + 10.0 * breathe)
+
+                # 颜色：底部更尘、顶部更电光
+                if h < 0.25:
+                    col = DUST_2 if (i % 4) else DUST_1
+                elif h < 0.60:
+                    col = DUST_1 if (i % 3) else STORM_BLUE
+                else:
+                    col = STORM_CYAN if (i % 3) else WHITE
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 18 == 0:
+                    time.sleep(0.0015)
+
+            # 碎片/电光点睛：沿漏斗“中上段”卷起（很少，但会非常像风暴）
+            if k % int(max(5, round(9 / max(0.7, intensity)))) == 0:
+                for j in range(debris):
+                    h = 0.45 + 0.50 * rnd()
+                    r = (R0 + (R1 - R0) * (h ** 1.15)) * (0.75 + 0.25 * rnd())
+                    ang = (2.0 * math.pi) * rnd() + TWIST * h + 0.6 * t * 2.0 * math.pi
+
+                    px = drift_x + math.cos(ang) * r
+                    pz = Z0 + drift_z + math.sin(ang) * r
+
+                    # 碎片速度：更“被甩出去”
+                    tx = -math.sin(ang)
+                    tz =  math.cos(ang)
+
+                    vx = tx * (42.0 + 10.0 * rnd()) + (rnd() * 2.0 - 1.0) * 6.0
+                    vz = tz * (46.0 + 14.0 * rnd()) + (rnd() * 2.0 - 1.0) * 10.0
+                    vy = clamp_vy(38.0 + 10.0 * rnd() + 6.0 * intensity)
+
+                    ftype = sparkle_pool[(k + j) % len(sparkle_pool)]
+                    col = WHITE if j % 2 == 0 else (GOLD if j % 3 == 0 else STORM_CYAN)
+                    fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            # 风眼：中心少量上升细雾（让“空心”更明显）
+            if k % 6 == 0:
+                eye = int(round(4 + 4 * intensity))
+                for e in range(eye):
+                    px = drift_x + (rnd() * 2.0 - 1.0) * 3.2
+                    pz = Z0 + drift_z + (rnd() * 2.0 - 1.0) * 3.2
+                    vx = (rnd() * 2.0 - 1.0) * 2.0
+                    vz = (rnd() * 2.0 - 1.0) * 2.0
+                    vy = clamp_vy(20.0 + 10.0 * intensity)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, DEEP)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：风暴爆发收束（顶部“电闪环”+ 甩出一圈碎片）
+        # ==========================================================
+        for k in range(climax_ticks):
+            t = k / max(1, climax_ticks - 1)
+            flash = 0.85 + 0.65 * math.sin(t * math.pi)
+
+            # 顶部电闪环（不是漩涡发射：是一次性环形爆发）
+            ring = int(round((64 + 40 * intensity) * flash))
+            ring = max(56, ring)
+
+            for i in range(ring):
+                th = 2.0 * math.pi * (i / ring)
+                # 顶部半径小一点，更像漏斗顶端“抽紧后爆发”
+                rad = (R1 + 14.0) * (0.8 + 0.4 * rnd())
+
+                px = math.cos(th) * rad
+                pz = Z0 + 6.0 + math.sin(th) * rad
+
+                vx = math.cos(th) * (26.0 + 18.0 * rnd())
+                vz = math.sin(th) * (30.0 + 22.0 * rnd())
+                vy = clamp_vy(46.0 + 10.0 * rnd() + 6.0 * intensity)
+
+                ftype = sparkle_pool[i % len(sparkle_pool)] if (i % 7 == 0) else T.nothing
+                col = WHITE if i % 3 == 0 else (STORM_CYAN if i % 3 == 1 else GOLD)
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 14 == 0:
+                    time.sleep(0.004)
+
+            time.sleep(0.07)
+
+        time.sleep(0.25)
+
+
+    def climax_rotating_world_tree(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.6, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else (MIN_VY + 0.5)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 配色：树干（木色）+ 树冠（青绿）+ 金色高光
+        BARK_1 = (120, 72, 38)
+        BARK_2 = (80, 48, 26)
+        SAP_GLOW = (255, 220, 120)
+
+        LEAF_1 = (90, 240, 170)
+        LEAF_2 = (70, 210, 255)
+        LEAF_3 = (210, 160, 255)
+        LEAF_HI = (255, 245, 230)
+
+        jewel_pool = [T.circle, T.planet_ball, T.planet_random_color, T.mixed_color_ball, T.half_half_color_ball]
+
+        # 尺度（你可以按场景再放大）
+        trunk_steps = int(round(16 + 8 * intensity))          # 树干分段
+        trunk_steps = max(18, trunk_steps)
+
+        rings_per_step = int(round(8 + 6 * intensity))        # 每段木纹“环”
+        rings_per_step = max(8, rings_per_step)
+
+        branches_levels = [0.28, 0.45, 0.62, 0.78]             # 4层开枝高度（相对）
+        branch_each = int(round(8 + 4 * intensity))            # 每层枝数
+        branch_each = max(8, branch_each)
+
+        canopy_layers = int(round(5 + 3 * intensity))          # 树冠层数
+        canopy_layers = max(5, canopy_layers)
+
+        canopy_rays = int(round(26 + 16 * intensity))          # 每层叶幕射线数
+        canopy_rays = max(28, canopy_rays)
+
+        dt = 0.055 / max(0.7, intensity)
+
+        # =========================
+        # Phase 0：根基柔光（地面气息）
+        # =========================
+        base = int(round(36 * intensity))
+        for i in range(base):
+            th = 2.0 * math.pi * rnd()
+            rad = 10.0 + 18.0 * rnd()
+            px = math.cos(th) * (rad * 0.35)
+            pz = math.sin(th) * (rad * 0.35)
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 4.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vy = clamp_vy(18.0 + 6.0 * intensity)
+
+            col = SAP_GLOW if i % 7 == 0 else BARK_1
+            fire((px, 0.0, pz), (vx * 0.35, vy, vz * 0.35), T.nothing, col)
+            if i % 10 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.15)
+
+        # =========================
+        # Phase 1：树干螺旋生长（核心：用 Rz 旋转“木纹环”）
+        # =========================
+        # 木纹环的基向量：先给一个小的横向，再叠加向上速度
+        base_ring_vec = np.array([[14.0], [0.0], [0.0]])  # 只负责横向“木纹环”的半径速度分量
+
+        trunk_twist = 26.0 + 18.0 * intensity            # 每段的旋转增量（度）——扭生感
+        trunk_up = 26.0 + 10.0 * intensity               # 树干整体向上速度基准
+
+        for s in range(trunk_steps):
+            t = s / max(1, trunk_steps - 1)
+
+            # 树干逐段变细（越往上环越小）
+            shrink = 1.0 - 0.55 * (t ** 1.15)
+            ring_speed = (10.0 + 10.0 * intensity) * shrink
+
+            # 这一段的扭转角度（度）
+            twist_deg = s * trunk_twist + 18.0 * math.sin(t * 3.2)
+
+            # 每段喷几个“木纹环”，像树皮绕着长
+            for r in range(rings_per_step):
+                # 在这一段内部再做一点微旋转，让木纹更细腻
+                deg = twist_deg + (360.0 / rings_per_step) * r
+
+                vxy = Rz(deg) @ (base_ring_vec * (ring_speed * (0.85 + 0.25 * rnd())))
+                vx = float(vxy[0, 0]) + (rnd() * 2.0 - 1.0) * 1.6
+                vz = float(vxy[1, 0]) + (rnd() * 2.0 - 1.0) * 2.2  # 注意：这里把矩阵的“y”当作 z 平面横向分量用
+                vy = clamp_vy(trunk_up + 10.0 * intensity + 10.0 * (1.0 - abs(2.0 * t - 1.0)))
+
+                # 树干颜色：下深上浅 + 偶尔“树脂金光”
+                if (s % 5 == 0) and (r % 7 == 0) and (rnd() < 0.6):
+                    col = SAP_GLOW
+                else:
+                    col = BARK_2 if (r % 2 == 0) else BARK_1
+
+                fire((0.0, 0.0, 0.0), (vx, vy, vz), T.nothing, col)
+
+                if r % 6 == 0:
+                    time.sleep(0.002)
+
+            # 在特定高度开枝（下一段做）
+            time.sleep(dt)
+
+            # =========================
+            # Phase 2：分层开枝（旋转扇出枝丫，形成 3D）
+            # =========================
+            for lv_idx, lv in enumerate(branches_levels):
+                if abs(t - lv) < (0.5 / trunk_steps):  # 命中该层
+                    # 枝丫基向量：横向大、向上中等、带 z 深度交错
+                    branch_base = np.array([[28.0 + 10.0 * intensity],
+                                            [0.0],
+                                            [0.0]])
+
+                    # 枝丫围绕树干一圈“旋转开花”
+                    for b in range(branch_each):
+                        ang = (360.0 / branch_each) * b + twist_deg * 0.55 + 22.0 * lv_idx
+
+                        vxy = Rz(ang) @ branch_base
+                        vx = float(vxy[0, 0]) + (rnd() * 2.0 - 1.0) * 3.0
+                        vz = float(vxy[1, 0]) + (rnd() * 2.0 - 1.0) * 4.5
+
+                        # 让枝丫在 3D 上“前后交错”（不是只有平面）
+                        depth = (1.0 if (b % 2 == 0) else -1.0) * (10.0 + 10.0 * rnd())
+                        vz += depth
+
+                        vy = clamp_vy(22.0 + 10.0 * intensity + 6.0 * (1.0 - lv) + 6.0 * rnd())
+
+                        # 枝：主要是树皮光轨，枝尖给一点叶色“发芽感”
+                        tip_col = LEAF_1 if (b % 3 == 0) else LEAF_2
+                        col = SAP_GLOW if (b % 7 == 0) else (BARK_1 if rnd() < 0.6 else BARK_2)
+                        fire((0.0, 0.0, 0.0), (vx, vy, vz), T.nothing, col)
+
+                        # 枝尖“叶芽闪点”（很少，但会让枝丫更像活的）
+                        if b % 4 == 0:
+                            fire((0.0, 0.0, 0.0),
+                                (vx * 0.25, clamp_vy(34.0 + 6.0 * intensity), vz * 0.25),
+                                T.circle, tip_col)
+
+                        time.sleep(0.01)
+
+                    time.sleep(0.12)
+
+        time.sleep(0.18)
+
+        # =========================
+        # Phase 3：巨型树冠（分层叶幕：大、柔、梦幻）
+        # =========================
+        # 树冠“基向量”——射线向外扩散，靠 Rz 做环向铺开
+        canopy_base = np.array([[32.0 + 18.0 * intensity],
+                                [0.0],
+                                [0.0]])
+
+        for layer in range(canopy_layers):
+            u = layer / max(1, canopy_layers - 1)
+            # 每层半径更大、向上更轻柔
+            radial = (0.85 + 0.55 * u)
+            lift = 26.0 + 10.0 * intensity + 8.0 * (1.0 - u)
+
+            # 轻微“风”让树冠像在呼吸摆动
+            wind_deg = 18.0 * math.sin(layer * 1.7)
+
+            for i in range(canopy_rays):
+                ang = (360.0 / canopy_rays) * i + wind_deg
+
+                vxy = Rz(ang) @ (canopy_base * radial)
+                vx = float(vxy[0, 0]) + (rnd() * 2.0 - 1.0) * 6.0
+                vz = float(vxy[1, 0]) + (rnd() * 2.0 - 1.0) * 9.0
+
+                # 让树冠有“球形体积”：前后层次更明显
+                vz += (rnd() * 2.0 - 1.0) * (16.0 + 10.0 * u)
+
+                vy = clamp_vy(lift + 10.0 * rnd())
+
+                # 叶色渐变：青绿 -> 青蓝 -> 淡紫 -> 珍珠白高光
+                mod = (i + layer * 3) % 12
+                if mod < 4:
+                    col = LEAF_1
+                elif mod < 7:
+                    col = LEAF_2
+                elif mod < 10:
+                    col = LEAF_3
+                else:
+                    col = LEAF_HI
+
+                # 大多数用光轨（温柔又壮观），少量宝石点睛
+                if i % 13 == 0:
+                    ftype = jewel_pool[(i + layer) % len(jewel_pool)]
+                    fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+                else:
+                    fire((0.0, 0.0, 0.0), (vx, vy, vz), T.nothing, col)
+
+                if i % 14 == 0:
+                    time.sleep(0.003)
+
+            time.sleep(0.12)
+
+        # =========================
+        # Phase 4：树冠“星辉加冕”（一次很大的顶端收束）
+        # =========================
+        crown = int(round(90 * intensity))
+        crown = max(70, crown)
+
+        for i in range(crown):
+            th = 2.0 * math.pi * (i / crown)
+            rad = 22.0 + 18.0 * rnd()
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 6.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = clamp_vy(44.0 + 10.0 * rnd() + 6.0 * intensity)
+
+            col = LEAF_HI if i % 3 == 0 else SAP_GLOW
+            ftype = T.circle if i % 4 == 0 else T.nothing
+            fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+
+            if i % 12 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.25)
+
+    def climax_christmas_tree_persistent(self, intensity=1.0, keepalive_seconds=18.0):
+        T = self.type_firework
+        intensity = 0.05
+        keepalive_seconds = max(6.0, float(keepalive_seconds))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else (MIN_VY + 0.5)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 颜色
+        GREEN_D = (25, 110, 65)
+        GREEN_M = (70, 200, 120)
+        GREEN_H = (140, 255, 190)
+
+        TRUNK_1 = (120, 72, 38)
+        TRUNK_2 = (80, 48, 26)
+
+        STAR_GOLD  = (255, 220, 120)
+        STAR_WHITE = (255, 245, 230)
+
+        LIGHTS = [
+            (255, 90, 90),
+            (255, 160, 80),
+            (90, 210, 255),
+            (210, 140, 255),
+            (160, 255, 220),
+        ]
+
+        # 树形尺度（把轮廓做得更“像🌲”：宽底尖顶）
+        W = 40.0  # 轮廓更明显：比你上个版本更宽
+        vy_min = 18.0 + 6.0 * intensity
+        vy_max = 66.0 + 10.0 * intensity
+
+        # 3D 厚度：三层
+        z_layers = [-10.0, 0.0, 10.0]
+
+        # 刷新节奏：越小越“常亮”，但线程更多；这里取折中
+        refresh_dt = 0.28 / max(0.75, intensity)
+
+        # 树干做“粗而稳”：横向速度极小，让它像固定灯带
+        trunk_w = 9.0
+        trunk_d = 6.0
+        trunk_cols = int(round(10 + 6 * intensity))
+        trunk_rows = int(round(8 + 4 * intensity))
+        # trunk_cols = max(12, trunk_cols)
+        # trunk_rows = max(8, trunk_rows)
+
+        # 轮廓点：多一些才清晰
+        outline_pts = int(round(60 + 30 * intensity))
+        # outline_pts = max(110, outline_pts)
+
+        # 填充点：少量，避免盖住轮廓
+        fill_pts = int(round(10 + 8 * intensity))
+        # fill_pts = max(18, fill_pts)
+
+        # 背景轻雾（非常少）
+        def bg_mist(n=18):
+            for i in range(n):
+                px = (rnd() * 2.0 - 1.0) * (W * 0.42)
+                pz = (rnd() * 2.0 - 1.0) * 24.0
+                vx = (rnd() * 2.0 - 1.0) * 2.5
+                vz = (rnd() * 2.0 - 1.0) * 3.0
+                vy = clamp_vy(14.0 + 3.0 * rnd())
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, (25, 45, 95))
+
+        # “轮廓高度函数”：frac=1-|x|/(W/2)，并让顶部更尖
+        def height_frac(x):
+            frac = 1.0 - min(1.0, abs(x) / (W * 0.5))
+            return max(0.0, frac) ** 1.22
+
+        # 持续刷新：树干 + 轮廓 + 少量填充
+        start = time.time()
+        ornament_done = False
+        star_done = False
+
+        while (time.time() - start) < keepalive_seconds:
+            tsec = time.time() - start
+            phase = tsec / keepalive_seconds
+
+            # 每次刷新先来一点点背景雾，增强对比（很轻）
+            if int(tsec / refresh_dt) % 6 == 0:
+                bg_mist(n=10)
+
+            # -------- 树干刷新（持续可见的关键）--------
+            for layer_i, z0 in enumerate(z_layers):
+                for ix in range(trunk_cols):
+                    for iz in range(trunk_rows):
+                        x = (-trunk_w * 0.5) + trunk_w * (ix / max(1, trunk_cols - 1))
+                        z = z0 + (-trunk_d * 0.5) + trunk_d * (iz / max(1, trunk_rows - 1))
+
+                        # 极稳的“灯带式”树干
+                        vx = (rnd() * 2.0 - 1.0) * 0.7
+                        vz = (rnd() * 2.0 - 1.0) * 0.9
+                        vy = clamp_vy(22.0 + 6.0 * intensity + 2.0 * rnd())
+
+                        col = TRUNK_1 if (ix + iz + layer_i) % 2 == 0 else TRUNK_2
+                        fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+                time.sleep(0.01)
+
+            # -------- 轮廓刷新（确保🌲形状一直在）--------
+            # 轮廓两条边 + 少量“加粗”
+            for layer_i, z0 in enumerate(z_layers):
+                layer_boost = 0.90 if layer_i == 0 else (1.0 if layer_i == 1 else 1.12)
+
+                for i in range(outline_pts):
+                    x = (-W * 0.5) + W * (i / max(1, outline_pts - 1))
+                    frac = height_frac(x)
+
+                    # 轮廓越靠顶越亮、速度越“直”
+                    z = z0 + (rnd() * 2.0 - 1.0) * (1.2 + 1.6 * (1.0 - frac))
+
+                    vx = (rnd() * 2.0 - 1.0) * 0.9
+                    vz = (rnd() * 2.0 - 1.0) * 1.2
+                    vy = clamp_vy(vy_min + (vy_max - vy_min) * frac * layer_boost)
+
+                    if frac > 0.72:
+                        col = GREEN_H
+                    elif frac > 0.40:
+                        col = GREEN_M
+                    else:
+                        col = GREEN_D
+
+                    fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+                    # 轮廓加粗（但不加太多，避免卡）
+                    if i % 4 == 0:
+                        fire((x, 0.0, z + (1.6 if layer_i == 2 else -1.2)),
+                            (vx * 0.85, clamp_vy(vy * 0.98), vz * 0.85),
+                            T.nothing, col)
+
+                time.sleep(0.02)
+
+            # -------- 少量内部填充（维持“树体感”，但不遮轮廓）--------
+            if int(tsec / refresh_dt) % 2 == 0:
+                for layer_i, z0 in enumerate(z_layers):
+                    for i in range(fill_pts):
+                        h = rnd() ** 0.75
+                        max_x = (W * 0.5) * (1.0 - h)
+                        x = (rnd() * 2.0 - 1.0) * max_x
+                        z = z0 + (rnd() * 2.0 - 1.0) * (7.0 + 10.0 * (1.0 - h))
+
+                        vx = (rnd() * 2.0 - 1.0) * 1.2
+                        vz = (rnd() * 2.0 - 1.0) * 1.8
+                        vy = clamp_vy(vy_min + (vy_max - vy_min) * h * (0.90 + 0.12 * math.sin(tsec)))
+
+                        col = GREEN_M if i % 3 == 0 else GREEN_D
+                        fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+            # -------- 中段：彩灯只点缀一次（否则会重复很乱）--------
+            if (not ornament_done) and (phase > 0.40):
+                ornaments = int(round(26 + 8 * intensity))
+                for i in range(ornaments):
+                    h = 0.22 + 0.75 * rnd()
+                    max_x = (W * 0.5) * (1.0 - h)
+                    x = (rnd() * 2.0 - 1.0) * max_x
+                    z = (rnd() * 2.0 - 1.0) * (10.0 + 12.0 * (1.0 - h))
+
+                    vy = clamp_vy(vy_min + (vy_max - vy_min) * h * 0.90)
+                    vx = (rnd() * 2.0 - 1.0) * 1.0
+                    vz = (rnd() * 2.0 - 1.0) * 1.3
+
+                    col = LIGHTS[i % len(LIGHTS)]
+                    fire((x, 0.0, z), (vx, clamp_vy(vy + 10.0), vz), T.circle, col)
+
+                    if i % 6 == 0:
+                        time.sleep(0.02)
+
+                ornament_done = True
+                time.sleep(0.15)
+
+            # -------- 末段：顶端星星只出现一次（必须非常清晰）--------
+            if (not star_done) and (phase > 0.75):
+                # 星核
+                fire((0.0, 0.0, 0.0), (0.0, clamp_vy(vy_max + 12.0), 0.0), T.circle, STAR_GOLD)
+                time.sleep(0.08)
+
+                # 星芒（用 Rz 旋转做 5角节奏）
+                rays = 10
+                base = np.array([[26.0 + 10.0 * intensity], [0.0], [0.0]])
+                for i in range(rays):
+                    deg = (360.0 / rays) * i
+                    vxy = Rz(deg) @ base
+                    scale = 1.0 if (i % 2 == 0) else 0.55
+
+                    vx = float(vxy[0, 0]) * scale + (rnd() * 2.0 - 1.0) * 2.0
+                    vz = float(vxy[1, 0]) * scale + (rnd() * 2.0 - 1.0) * 3.0
+                    vy = clamp_vy(vy_max + (16.0 if i % 2 == 0 else 12.0))
+
+                    col = STAR_WHITE if (i % 3 == 0) else STAR_GOLD
+                    fire((0.0, 0.0, 0.0), (vx, vy, vz), T.nothing, col)
+                    time.sleep(0.015)
+
+                star_done = True
+                time.sleep(0.12)
+
+            time.sleep(refresh_dt)
+
+        time.sleep(0.25)
+
+
+
+    def climax_pillar_forest_uplift(self, intensity=1.0):
+        T = self.type_firework
+        intensity = max(0.6, float(intensity))
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else (MIN_VY + 0.5)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 颜色：柱芯冷白 + 青蓝辉光 + 金白顶帽
+        CORE = (245, 250, 255)
+        ICE  = (170, 220, 255)
+        CYAN = (120, 220, 255)
+        DEEP = (60, 120, 255)
+        GOLD = (255, 220, 120)
+        PEARL = (255, 245, 230)
+
+        # 3D 柱阵布局：x 方向一排排，z 三层（前/中/后）
+        XMAX = 95.0
+        z_rows = [-22.0, 0.0, 22.0]   # 明确前后层次
+        cols_per_row = int(round(11 + 5 * intensity))
+        cols_per_row = max(9, min(18, cols_per_row))
+
+        xs = [(-XMAX + (2 * XMAX) * (i / max(1, cols_per_row - 1))) for i in range(cols_per_row)]
+
+        dt = 0.055 / max(0.7, intensity)
+
+        # 柱子高度通过 vy 模拟：越大越“高”
+        vy_base = 22.0 + 10.0 * intensity
+        vy_peak = 72.0 + 12.0 * intensity
+
+        # ==========================================================
+        # Phase 0：地基点火（很短，强调“从地面起”）
+        # ==========================================================
+        base_shots = int(round(40 * intensity))
+        for i in range(base_shots):
+            x = xs[i % len(xs)]
+            z = z_rows[i % len(z_rows)] + (rnd() * 2.0 - 1.0) * 3.0
+
+            vx = (rnd() * 2.0 - 1.0) * 1.0
+            vz = (rnd() * 2.0 - 1.0) * 1.2
+            vy = clamp_vy(18.0 + 6.0 * intensity + 4.0 * rnd())
+
+            col = CYAN if i % 5 == 0 else ICE
+            fire((x, 0.0, z), (vx, vy, vz), T.nothing, col)
+
+            if i % 12 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.15)
+
+        # ==========================================================
+        # Phase 1：立柱成林（从左到右“竖直上拔”的波，方向非常明确）
+        # ==========================================================
+        build_ticks = int(round(46 * intensity))
+        build_ticks = max(34, build_ticks)
+
+        for k in range(build_ticks):
+            t = k / max(1, build_ticks - 1)
+
+            # “能量波前沿”从左扫到右：front in [-XMAX, XMAX]
+            front = -XMAX + (2 * XMAX) * t
+
+            for zi, z0 in enumerate(z_rows):
+                depth_boost = 0.92 if zi == 0 else (1.0 if zi == 1 else 1.08)  # 前层更亮一点
+
+                for xi, x0 in enumerate(xs):
+                    # 离波前越近越亮越高（形成清晰的扫过效果）
+                    d = abs(x0 - front)
+                    influence = max(0.0, 1.0 - d / 28.0)  # 影响半径
+                    if influence <= 0.0:
+                        continue
+
+                    # 一根柱子用几股竖丝加粗（但保持方向几乎纯 +Y）
+                    strands = 2 + (1 if xi % 3 == 0 else 0)
+                    for s in range(strands):
+                        px = x0 + (rnd() * 2.0 - 1.0) * 1.3
+                        pz = z0 + (rnd() * 2.0 - 1.0) * 1.7
+
+                        vx = (rnd() * 2.0 - 1.0) * 0.8   # 横向极小，确保“竖直柱”
+                        vz = (rnd() * 2.0 - 1.0) * 1.0
+                        vy = clamp_vy((vy_base + (vy_peak - vy_base) * influence) * depth_boost)
+
+                        # 颜色：波前核心更白，外缘偏蓝
+                        if influence > 0.78:
+                            col = CORE if (s % 2 == 0) else PEARL
+                        elif influence > 0.45:
+                            col = ICE
+                        else:
+                            col = DEEP
+
+                        fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    if xi % 6 == 0:
+                        time.sleep(0.0015)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：柱内“上行脉冲”（每根柱子出现沿高度上行的亮点，仍是竖直方向）
+        # ==========================================================
+        pulse_ticks = int(round(40 * intensity))
+        pulse_ticks = max(30, pulse_ticks)
+
+        for k in range(pulse_ticks):
+            t = k / max(1, pulse_ticks - 1)
+
+            # 脉冲位置：从低到高（通过 vy 逐步增大来模拟）
+            pulse_vy = clamp_vy(vy_base + (vy_peak - vy_base) * t)
+
+            for zi, z0 in enumerate(z_rows):
+                depth_boost = 0.95 if zi == 0 else (1.0 if zi == 1 else 1.05)
+
+                # 每次只点亮部分柱，避免太卡，同时节奏更像“呼吸”
+                for xi, x0 in enumerate(xs):
+                    if (xi + k) % 2 != 0:
+                        continue
+
+                    px = x0 + (rnd() * 2.0 - 1.0) * 1.0
+                    pz = z0 + (rnd() * 2.0 - 1.0) * 1.3
+
+                    vx = (rnd() * 2.0 - 1.0) * 0.7
+                    vz = (rnd() * 2.0 - 1.0) * 0.9
+                    vy = clamp_vy(pulse_vy * depth_boost + 6.0 * rnd())
+
+                    col = PEARL if (xi % 6 == 0) else ICE
+                    # 少量用 circle 做“脉冲亮点”
+                    if xi % 7 == 0 and (k % 3 == 0):
+                        fire((px, 0.0, pz), (vx, clamp_vy(vy + 10.0), vz), T.circle, col)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                time.sleep(0.01)
+
+            time.sleep(0.05)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：柱顶冠帽（每根柱子的“顶端”统一加冕一次，柱子主题收束很明确）
+        # ==========================================================
+        caps = int(round(2 + 1 * intensity))
+        caps = max(2, caps)
+
+        for c in range(caps):
+            for zi, z0 in enumerate(z_rows):
+                for xi, x0 in enumerate(xs):
+                    if (xi + c) % 2 == 1:
+                        continue
+
+                    # 顶帽位置仍在柱底发射，但用更强 vy + 更亮颜色表达“顶端冠帽”
+                    px = x0 + (rnd() * 2.0 - 1.0) * 0.9
+                    pz = z0 + (rnd() * 2.0 - 1.0) * 1.2
+
+                    vx = (rnd() * 2.0 - 1.0) * 1.2
+                    vz = (rnd() * 2.0 - 1.0) * 1.6
+                    vy = clamp_vy(vy_peak + 10.0 + 6.0 * rnd())
+
+                    col = GOLD if (xi % 5 == 0) else PEARL
+                    # 顶帽少量宝石点睛（不铺天盖地）
+                    if xi % 6 == 0:
+                        fire((px, 0.0, pz), (vx, vy, vz), T.planet_random_color, col)
+                    else:
+                        fire((px, 0.0, pz), (vx, vy, vz), T.circle, col)
+
+                    if xi % 7 == 0:
+                        time.sleep(0.004)
+
+            time.sleep(0.18)
+
+        time.sleep(0.25)
+
+    def climax_hypercube_lattice_collapse(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.3
+        MIN_VY = 12.0
+
+        def clamp_vy(v):
+            v = float(v)
+            return v if v > MIN_VY else (MIN_VY + 0.5)
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 科幻配色：冷白/冰蓝/深蓝 + 金白核心
+        PEARL = (255, 245, 230)
+        COREW = (245, 250, 255)
+        ICE   = (170, 220, 255)
+        DEEP  = (60, 120, 255)
+        VIO   = (190, 90, 255)
+        GOLD  = (255, 220, 120)
+
+        jewel = [T.circle, T.planet_ball, T.planet_random_color, T.mixed_color_ball, T.half_half_color_ball, T.double_ball]
+
+        # 舞台参数（cube 在 XZ 平面投影很大，靠 vy 做“高度层”形成 3D）
+        S = 72.0                        # 立方体半边长（越大越震撼）
+        layer_z = [-18.0, 0.0, 18.0]    # 前/中/后纵深层
+        dt = 0.055 / max(0.7, intensity)
+
+        # 通用：根据“深度层”给不同的亮度与 vy（形成真正的 3D 层次）
+        def depth_style(li):
+            # li: 0后,1中,2前
+            if li == 0:
+                return (DEEP, 0.92, 0.88)   # 颜色、vy倍率、亮度倍率
+            elif li == 1:
+                return (ICE, 1.00, 1.00)
+            else:
+                return (COREW, 1.08, 1.12)
+
+        # ==========================================================
+        # Phase 0：很轻的“空间尘埃”让全息框更显眼
+        # ==========================================================
+        bg = int(round(48 * intensity))
+        for i in range(bg):
+            px = (rnd() * 2.0 - 1.0) * (S * 0.65)
+            pz = (rnd() * 2.0 - 1.0) * (S * 0.55)
+            vx = (rnd() * 2.0 - 1.0) * 3.5
+            vz = (rnd() * 2.0 - 1.0) * 4.0
+            vy = clamp_vy(14.0 + 4.0 * rnd())
+            fire((px, 0.0, pz), (vx, vy, vz), T.nothing, (15, 25, 70) if i % 3 else DEEP)
+            if i % 14 == 0:
+                time.sleep(0.008)
+
+        time.sleep(0.16)
+
+        # ==========================================================
+        # Phase 1：全息立方体“框架锁定”（12条边：每条边用多股线条加粗）
+        # ==========================================================
+        # 立方体 8 个顶点（只用 XZ，Y 用 vy 表达层次）
+        verts = [
+            (-S, -S), ( S, -S), ( S,  S), (-S,  S),  # 底面 4 点
+            (-S, -S), ( S, -S), ( S,  S), (-S,  S),  # 顶面投影同样 4 点（靠 vy 区分）
+        ]
+        # 边连接（底面4，顶面4，竖边4）——用索引表示
+        edges = [
+            (0,1),(1,2),(2,3),(3,0),   # 底面
+            (4,5),(5,6),(6,7),(7,4),   # 顶面（用更高 vy 表示）
+            (0,4),(1,5),(2,6),(3,7),   # 竖边（用 vy 变化做“抬升”错觉）
+        ]
+
+        edge_samples = int(round(18 + 10 * intensity))
+        edge_samples = max(18, edge_samples)
+        edge_strands = int(round(2 + 2 * intensity))
+        edge_strands = max(2, min(5, edge_strands))
+
+        # 边的“高度编码”：底面低、顶面高、竖边中间渐变
+        def edge_vy_mode(ei):
+            if ei < 4:      # 底面
+                return 26.0 + 10.0 * intensity
+            elif ei < 8:    # 顶面
+                return 54.0 + 12.0 * intensity
+            else:           # 竖边
+                return 40.0 + 12.0 * intensity
+
+        for li, zoff in enumerate(layer_z):
+            base_col, vy_mul, lum = depth_style(li)
+
+            for ei, (a, b) in enumerate(edges):
+                (x0, z0) = verts[a]
+                (x1, z1) = verts[b]
+
+                vy_edge = clamp_vy(edge_vy_mode(ei) * vy_mul)
+
+                for s in range(edge_samples):
+                    u = s / max(1, edge_samples - 1)
+                    px = x0 + (x1 - x0) * u
+                    pz = zoff + (z0 + (z1 - z0) * u)
+
+                    # 速度方向：沿边“描线”，同时向上抬升，形成框线的视觉
+                    tx = (x1 - x0)
+                    tz = (z1 - z0)
+                    m = (tx * tx + tz * tz) ** 0.5 + 1e-6
+                    tx, tz = tx / m, tz / m
+
+                    # 沿边推进 + 轻微稳定抖动（不要太飘，不然框会糊）
+                    vx0 = tx * (18.0 + 10.0 * intensity) + (rnd() * 2.0 - 1.0) * 1.6
+                    vz0 = tz * (18.0 + 10.0 * intensity) + (rnd() * 2.0 - 1.0) * 2.2
+
+                    # 线条加粗：平行偏移几股
+                    for k in range(edge_strands):
+                        off = (k - (edge_strands - 1) / 2.0) * 1.2
+                        # 法线偏移
+                        nx, nz = -tz, tx
+                        col = PEARL if ((s + k + ei) % 11 == 0) else base_col
+                        fire((px + nx * off, 0.0, pz + nz * off), (vx0, vy_edge, vz0), T.nothing, col)
+
+                    if s % 7 == 0:
+                        time.sleep(0.0015)
+
+                # 每条边的端点偶尔给一点“锁定闪点”
+                if ei % 3 == 0:
+                    corner_col = PEARL if ei % 2 == 0 else GOLD
+                    fire((x0, 0.0, zoff + z0), (0.0, clamp_vy(vy_edge + 10.0), 0.0), T.circle, corner_col)
+
+            time.sleep(0.06)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 2：内部光栅晶格（像空间坐标网格被点亮）
+        # 重点：规则但不死板，点阵+短线混合，形成“全息体积”
+        # ==========================================================
+        grid_n = 5  # 5x5x3（纵深3层）
+        grid_pts_per_tick = int(round(28 + 18 * intensity))
+        grid_ticks = int(round(42 * intensity))
+        #grid_ticks = max(32, grid_ticks)
+
+        for k in range(grid_ticks):
+            t = k / max(1, grid_ticks - 1)
+            pulse = 0.75 + 0.55 * math.sin(t * math.pi)
+
+            for li, zoff in enumerate(layer_z):
+                base_col, vy_mul, lum = depth_style(li)
+
+                for i in range(grid_pts_per_tick):
+                    gx = int(rnd() * grid_n)
+                    gz = int(rnd() * grid_n)
+
+                    # 映射到 [-S, S]
+                    px = (-S) + (2 * S) * (gx / max(1, grid_n - 1))
+                    pz = zoff + (-S) + (2 * S) * (gz / max(1, grid_n - 1))
+
+                    # “网格发光”速度：几乎竖直，轻微横向让它像悬浮点
+                    vx = (rnd() * 2.0 - 1.0) * (2.0 + 2.0 * pulse)
+                    vz = (rnd() * 2.0 - 1.0) * (2.6 + 2.4 * pulse)
+                    vy = clamp_vy((22.0 + 22.0 * pulse + 8.0 * intensity) * vy_mul)
+
+                    # 颜色：靠中心更亮，边缘更冷
+                    edge = max(abs(px) / S, abs((pz - zoff)) / S)
+                    if edge < 0.35:
+                        col = PEARL if (i % 7 == 0) else ICE
+                    elif edge < 0.75:
+                        col = base_col
+                    else:
+                        col = DEEP
+
+                    # 绝大多数用 nothing（全息点），少量用 circle 作为“节点灯”
+                    if (i % 13 == 0) and (k % 3 == 0):
+                        fire((px, 0.0, pz), (vx * 0.25, clamp_vy(vy + 14.0), vz * 0.25), T.circle, col)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    if i % 14 == 0:
+                        time.sleep(0.0015)
+
+            time.sleep(0.045)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：崩塌收束（所有光栅向中心“吸入”，但 vy 仍保持正值）
+        # 视觉：x/z 向 0 聚拢，形成“空间塌陷”
+        # ==========================================================
+        collapse_ticks = int(round(40 * intensity))
+        collapse_ticks = max(30, collapse_ticks)
+
+        collapse_shots = int(round(36 + 20 * intensity))
+        collapse_shots = max(36, collapse_shots)
+
+        for k in range(collapse_ticks):
+            t = k / max(1, collapse_ticks - 1)
+            grip = 0.55 + 0.85 * t  # 吸入强度逐步增强
+
+            for li, zoff in enumerate(layer_z):
+                base_col, vy_mul, lum = depth_style(li)
+
+                for i in range(collapse_shots):
+                    # 从整个立方体体积采样点
+                    px = (rnd() * 2.0 - 1.0) * S
+                    pz = zoff + (rnd() * 2.0 - 1.0) * S
+
+                    # 向中心吸入：vx,vz 指向 0
+                    vx = (-px) * (0.55 * grip) + (rnd() * 2.0 - 1.0) * 5.0
+                    vz = (-(pz - zoff)) * (0.60 * grip) + (rnd() * 2.0 - 1.0) * 6.0
+                    vy = clamp_vy((28.0 + 18.0 * grip + 8.0 * intensity) * vy_mul)
+
+                    # 吸入越强越亮
+                    col = PEARL if (i % 9 == 0) else (ICE if grip < 1.0 else COREW)
+                    fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                    # 崩塌边缘偶尔有“紫电”
+                    if (k % 8 == 0) and (i % 17 == 0):
+                        fire((px, 0.0, pz),
+                            (vx * 0.25, clamp_vy(vy + 16.0), vz * 0.25),
+                            T.circle, VIO)
+
+                    if i % 18 == 0:
+                        time.sleep(0.0018)
+
+            time.sleep(0.04)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 4：核心超新星外爆（一次“震撼的连贯高潮”）
+        # ==========================================================
+        finale = int(round(170 * intensity))
+        finale = max(130, finale)
+
+        for i in range(finale):
+            th = 2.0 * math.pi * (i / finale)
+            rad = 18.0 + 26.0 * rnd()
+
+            # 外爆方向（x/z 放大），vy 给很高形成“核心喷薄”
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 14.0
+            vy = clamp_vy(56.0 + 14.0 * rnd() + 10.0 * intensity)
+
+            # 颜色：金白核心 + 冷白外层 + 少量紫蓝电晕
+            if i % 11 == 0:
+                ftype = jewel[i % len(jewel)]
+                col = GOLD if i % 22 == 0 else PEARL
+            elif i % 7 == 0:
+                ftype = T.circle
+                col = VIO if (i % 14 == 0) else COREW
+            else:
+                ftype = T.nothing
+                col = ICE if i % 3 else COREW
+
+            fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+
+            if i % 14 == 0:
+                time.sleep(0.006)
+
+        time.sleep(0.25)
+
+    def climax_dna_helix_ascension(self, intensity=1.0):
+        T = self.type_firework
+        intensity = 0.4
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 配色：两条链不同色相，梯级用冷白，终章加金白
+        A1 = (90, 210, 255)     # cyan
+        A2 = (190, 90, 255)     # violet
+        B1 = (255, 120, 200)    # rose
+        B2 = (255, 220, 120)    # gold
+        WHITE = (255, 245, 230)
+        ICE = (245, 250, 255)
+
+        # 终章点睛（不要太多，避免卡）
+        jewel_pool = [T.circle, T.planet_ball, T.planet_random_color, T.mixed_color_ball, T.double_ball, T.half_half_color_ball]
+
+        # 时间步进：intensity 越大越快越紧凑
+        dt = 0.055 / intensity
+
+        # 主体参数：全依赖 intensity（无 max）
+        steps = int(80 * intensity) + 55                 # 双螺旋持续时间
+        strands_per_step = int(10 * intensity) + 10      # 每步每条链的“丝数”（越多越厚）
+        rung_every = int(6 / intensity) + 3              # 梯级出现频率（intensity大 -> 更频繁）
+        finale_steps = int(26 * intensity) + 18          # 解链终章时长
+
+        # 螺旋半径与扭转速度（角度用“度”，适配你现成的 Rz）
+        base_radius = (18.0 + 20.0 * intensity)
+        twist_deg_per_step = (18.0 + 26.0 * intensity)
+
+        # 上升速度（保证 vy>0，只用 intensity 缩放）
+        vy_base = intensity * 26.0
+        vy_gain = intensity * 56.0
+
+        # 起点（地面）稍微前后分层，让 3D 更明显
+        z_layers = [-10.0, 0.0, 10.0]
+
+        # ==========================================================
+        # Phase 1：双螺旋上升（两条链 180° 相位差）
+        # ==========================================================
+        v_base = np.array([[1.0], [0.0], [0.0]])  # 用 Rz 旋转生成 XZ 平面方向（这里把矩阵第2分量当 Z 用）
+
+        for k in range(steps):
+            h = k / (steps - 1)  # 0..1
+            # 螺旋半径随高度轻微“呼吸”，更像活体
+            breathe = 0.78 + 0.55 * math.sin(h * math.pi * 2.0)
+            radius = base_radius * (0.85 + 0.25 * breathe)
+
+            # 两条链的角度（B 相位差 180°）
+            angA = k * twist_deg_per_step
+            angB = angA + 180.0
+
+            # 上升速度逐步增强（越往后越震撼）
+            vy = vy_base + vy_gain * (0.25 + 0.75 * h)
+
+            # 每步发多条“丝”，让链条看起来连续、粗细可控
+            for li, z0 in enumerate(z_layers):
+                depth_boost = 0.92 + 0.08 * li  # 前层略亮/略强
+
+                for s in range(strands_per_step):
+                    # A 链方向
+                    dirA = Rz(angA + (rnd() * 2.0 - 1.0) * 6.0) @ v_base
+                    vxA = float(dirA[0, 0]) * radius * (0.65 + 0.25 * rnd())
+                    vzA = float(dirA[1, 0]) * radius * (0.65 + 0.25 * rnd())
+
+                    # B 链方向
+                    dirB = Rz(angB + (rnd() * 2.0 - 1.0) * 6.0) @ v_base
+                    vxB = float(dirB[0, 0]) * radius * (0.65 + 0.25 * rnd())
+                    vzB = float(dirB[1, 0]) * radius * (0.65 + 0.25 * rnd())
+
+                    # 让两链更“缠绕”：加一点相反的微偏置
+                    vxA += (rnd() * 2.0 - 1.0) * (3.0 + 3.0 * intensity)
+                    vzA += (rnd() * 2.0 - 1.0) * (5.0 + 4.0 * intensity)
+                    vxB += (rnd() * 2.0 - 1.0) * (3.0 + 3.0 * intensity)
+                    vzB += (rnd() * 2.0 - 1.0) * (5.0 + 4.0 * intensity)
+
+                    # 颜色沿高度渐变（梦幻又清晰）
+                    if h < 0.5:
+                        colA = A1
+                        colB = B1
+                    else:
+                        colA = A2
+                        colB = B2
+
+                    # 发射位置：围绕中心略抖动，叠出“厚度”
+                    px = (rnd() * 2.0 - 1.0) * (2.0 + 1.2 * intensity)
+                    pz = z0 + (rnd() * 2.0 - 1.0) * (2.6 + 1.6 * intensity)
+
+                    fire((px, 0.0, pz), (vxA, vy * depth_boost, vzA), T.nothing, colA)
+                    fire((px, 0.0, pz), (vxB, vy * depth_boost, vzB), T.nothing, colB)
+
+                    if s % 10 == 0:
+                        time.sleep(0.0015)
+
+            # ======================================================
+            # 梯级横梁（“基因天梯”的关键视觉）：每隔一段出现一圈横向连线
+            # 做法：在当前角度，用两侧相反方向的速度发一串，形成“横梁”
+            # ======================================================
+            if k % rung_every == 0:
+                rung_rays = int(12 * intensity) + 10
+                rung_radius = radius * 0.72
+
+                for li, z0 in enumerate(z_layers):
+                    # 横梁方向取当前 A 的方向，但发“正反两束”形成连线
+                    dirR = Rz(angA + 90.0) @ v_base
+                    rx = float(dirR[0, 0]) * rung_radius
+                    rz = float(dirR[1, 0]) * rung_radius
+
+                    for i in range(rung_rays):
+                        jitter = (rnd() * 2.0 - 1.0) * (4.0 + 2.0 * intensity)
+                        vx1 = rx + jitter
+                        vz1 = rz + (rnd() * 2.0 - 1.0) * (6.0 + 3.0 * intensity)
+                        vx2 = -rx + jitter
+                        vz2 = -rz + (rnd() * 2.0 - 1.0) * (6.0 + 3.0 * intensity)
+
+                        vy_r = intensity * (36.0 + 30.0 * (k / (steps - 1)))
+
+                        px = 0.0 + (rnd() * 2.0 - 1.0) * 2.0
+                        pz = z0 + (rnd() * 2.0 - 1.0) * 2.2
+
+                        fire((px, 0.0, pz), (vx1, vy_r, vz1), T.nothing, ICE)
+                        fire((px, 0.0, pz), (vx2, vy_r, vz2), T.nothing, ICE)
+
+                        # 梯级端点偶尔闪一下，强化“结构感”
+                        if i % 9 == 0:
+                            fire((px, 0.0, pz), (vx1 * 0.25, intensity * 70.0, vz1 * 0.25), T.circle, WHITE)
+
+                        if i % 10 == 0:
+                            time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：解链终章（双螺旋“外翻扩张”→ 彩色能量雨，震撼收束）
+        # ==========================================================
+        for k in range(finale_steps):
+            t = k / (finale_steps - 1)
+            # 半径迅速扩大，形成“解链外翻”的瞬间
+            radius = base_radius * (1.0 + 1.2 * t) * (1.0 + 0.25 * math.sin(t * math.pi))
+            vy = intensity * (64.0 + 40.0 * t)
+
+            burst = int(34 * intensity) + 28
+            for li, z0 in enumerate(z_layers):
+                for i in range(burst):
+                    ang = (k * twist_deg_per_step * 1.4) + (360.0 * (i / burst))
+                    dirV = Rz(ang) @ v_base
+                    vx = float(dirV[0, 0]) * radius + (rnd() * 2.0 - 1.0) * (10.0 + 8.0 * intensity)
+                    vz = float(dirV[1, 0]) * radius + (rnd() * 2.0 - 1.0) * (16.0 + 10.0 * intensity)
+
+                    # 颜色：彩色能量雨（白金+紫蓝+粉青交错）
+                    m = (i + k) % 6
+                    if m == 0:
+                        col = WHITE
+                    elif m == 1:
+                        col = B2
+                    elif m == 2:
+                        col = A2
+                    elif m == 3:
+                        col = A1
+                    elif m == 4:
+                        col = B1
+                    else:
+                        col = ICE
+
+                    # 少量用 jewel 点睛，其余用 nothing 保证连贯光轨
+                    if i % 13 == 0:
+                        ftype = jewel_pool[(i + k) % len(jewel_pool)]
+                    else:
+                        ftype = T.nothing
+
+                    px = (rnd() * 2.0 - 1.0) * 3.0
+                    pz = z0 + (rnd() * 2.0 - 1.0) * 3.5
+                    fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                    if i % 16 == 0:
+                        time.sleep(0.0025)
+
+            time.sleep(0.05 / intensity)
+
+        time.sleep(0.25)
+
+
+    def climax_lissajous_knot_sculpture(self, intensity=1.0):
+        intensity = 0.5
+        T = self.type_firework
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 光谱色（更“雕塑感”，避免像普通乱炸）
+        C_CYAN   = (90, 210, 255)
+        C_BLUE   = (60, 120, 255)
+        C_VIOLET = (190, 90, 255)
+        C_ROSE   = (255, 120, 200)
+        C_GOLD   = (255, 220, 120)
+        C_WHITE  = (255, 245, 230)
+        C_ICE    = (245, 250, 255)
+
+        jewel_pool = [
+            T.circle,
+            T.planet_ball,
+            T.planet_random_color,
+            T.mixed_color_ball,
+            T.double_ball,
+            T.half_half_color_ball
+        ]
+
+        # 时间步进：intensity 越大越紧凑
+        dt = 0.055 / intensity
+
+        # 总时长（ticks * dt）：随 intensity 变化但都很长、很连贯
+        ticks = int(230 * intensity) + 140
+
+        # 每步发射数量（不要太离谱，但足够“雕塑密度”）
+        per_tick = int(7 * intensity) + 7
+
+        # “结”的频率组合（3D knot 关键：互质频率 + 相位差）
+        a = 3
+        b = 2
+        c = 5
+
+        # 速度尺度（决定结的“体积”）
+        V = 34.0 + 26.0 * intensity
+        Vz = 44.0 + 30.0 * intensity
+        Vy_base = 22.0 + 18.0 * intensity  # 保证 vy > 0
+        Vy_amp  = 20.0 + 22.0 * intensity  # 结的“竖向呼吸”
+
+        # 3D 纵深层：让结不是平面的
+        z_layers = [-14.0, -4.0, 4.0, 14.0]
+
+        # 结点强调频率（越大越频繁）
+        beat_every = int(10 / intensity) + 6
+
+        # ----------------------------------------------------------
+        # 工具：按参数相位选择颜色（让结看起来像“光谱雕塑”）
+        # ----------------------------------------------------------
+        def spectrum(p):
+            # p in [0,1)
+            if p < 0.18:
+                return C_CYAN
+            if p < 0.36:
+                return C_BLUE
+            if p < 0.54:
+                return C_VIOLET
+            if p < 0.72:
+                return C_ROSE
+            if p < 0.90:
+                return C_GOLD
+            return C_ICE
+
+        # ==========================================================
+        # Phase 1：结的“雕刻生成”（持续、连贯、3D）
+        # ==========================================================
+        for k in range(ticks):
+            t = (2.0 * math.pi) * (k / (ticks - 1))
+
+            # 结的“呼吸”与“紧缩”节奏（像活体雕塑）
+            breathe = 0.78 + 0.55 * math.sin(0.65 * t)
+            tighten = 0.70 + 0.55 * math.sin(0.35 * t + 1.2)
+
+            for li, z0 in enumerate(z_layers):
+                depth_boost = 0.90 + 0.05 * li
+
+                for i in range(per_tick):
+                    # 在 t 附近做多采样，形成“丝带厚度”
+                    tt = t + (rnd() * 2.0 - 1.0) * (0.12 + 0.10 * intensity)
+
+                    # 李萨如结速度场（核心）
+                    vx = (V  * math.sin(a * tt + 0.7)) * (0.80 + 0.30 * breathe)
+                    vz = (Vz * math.sin(c * tt + 1.9)) * (0.75 + 0.35 * tighten)
+
+                    # vy 必须 > 0：用 base + amp*(0..1) 结构
+                    vy_wave = 0.50 + 0.50 * math.sin(b * tt + 2.3)  # [0,1]
+                    vy = Vy_base + Vy_amp * vy_wave
+
+                    # 少量抖动避免“数学太死板”
+                    vx += (rnd() * 2.0 - 1.0) * (5.0 + 5.0 * intensity)
+                    vz += (rnd() * 2.0 - 1.0) * (7.0 + 7.0 * intensity)
+
+                    # 发射位置：围绕中心很小的云团，突出“速度雕刻”
+                    px = (rnd() * 2.0 - 1.0) * (2.6 + 2.2 * intensity)
+                    pz = z0 + (rnd() * 2.0 - 1.0) * (3.2 + 2.8 * intensity)
+
+                    # 颜色按相位走光谱，让形体更可读
+                    phase = (0.12 * k + 0.31 * i + 0.07 * li) / (ticks)
+                    col = spectrum(phase % 1.0)
+
+                    fire((px, 0.0, pz), (vx * depth_boost, vy * depth_boost, vz), T.nothing, col)
+
+                    # 让“结的筋络”更清晰：偶尔加一条近似同向的“并行丝”
+                    if (i % 3 == 0) and (li % 2 == 0):
+                        fire((px, 0.0, pz),
+                            (vx * 0.78 * depth_boost, (vy + 10.0 * intensity) * depth_boost, vz * 0.78),
+                            T.nothing, C_ICE)
+
+                    if i % 10 == 0:
+                        time.sleep(0.0015)
+
+            # ======================================================
+            # 结点强调：周期性在“结心”附近闪烁，让观众看懂拓扑结构
+            # ======================================================
+            if k % beat_every == 0:
+                # 结点高光（少量，避免卡）
+                flashes = int(10 * intensity) + 10
+                for j in range(flashes):
+                    tt = t + (j / flashes) * (0.8 + 0.6 * intensity)
+
+                    vx = (V  * math.sin(a * tt + 0.7)) * 0.55
+                    vz = (Vz * math.sin(c * tt + 1.9)) * 0.55
+                    vy_wave = 0.50 + 0.50 * math.sin(b * tt + 2.3)
+                    vy = (Vy_base + Vy_amp * vy_wave) + (18.0 + 12.0 * intensity)
+
+                    # 白金闪点突出“结点”
+                    col = C_WHITE if (j % 2 == 0) else C_GOLD
+                    ftype = T.circle if (j % 3 != 0) else jewel_pool[(j + k) % len(jewel_pool)]
+
+                    fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+
+                    if j % 8 == 0:
+                        time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.20)
+
+        # ==========================================================
+        # Phase 2：结心“解放”终章（从结结构外翻成光谱雨）
+        # ==========================================================
+        finale_ticks = int(28 * intensity) + 20
+        finale_burst = int(55 * intensity) + 60
+
+        for k in range(finale_ticks):
+            u = k / (finale_ticks - 1)
+
+            # 外翻尺度：越到后越大
+            scale = 0.85 + 1.55 * u
+            vy = (Vy_base + 26.0 * intensity) + (50.0 + 40.0 * intensity) * u
+
+            for i in range(finale_burst):
+                th = (2.0 * math.pi) * (i / finale_burst)
+
+                vx = math.cos(th) * (26.0 + 44.0 * intensity) * scale + (rnd() * 2.0 - 1.0) * (10.0 + 10.0 * intensity)
+                vz = math.sin(th) * (34.0 + 56.0 * intensity) * scale + (rnd() * 2.0 - 1.0) * (16.0 + 14.0 * intensity)
+
+                # 光谱雨颜色交错
+                phase = (i / finale_burst + 0.22 * u) % 1.0
+                col = spectrum(phase)
+
+                # 少量 jewel 点睛，其余保持连续光轨
+                if i % 15 == 0:
+                    ftype = jewel_pool[(i + k) % len(jewel_pool)]
+                else:
+                    ftype = T.nothing
+
+                fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+
+                if i % 18 == 0:
+                    time.sleep(0.0028)
+
+            time.sleep(0.05 / intensity)
+
+        time.sleep(0.25)
+
+
+    def climax_mobius_loom(self, intensity=1.0):
+        T = self.type_firework
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 配色：丝带渐变（冷->暖->紫->白金）
+        PAL = [
+            (90, 210, 255),   # cyan
+            (70, 120, 255),   # blue
+            (190, 90, 255),   # violet
+            (255, 120, 200),  # rose
+            (255, 220, 120),  # gold
+            (255, 245, 230),  # pearl
+        ]
+
+        # ---------------------------
+        # 固定“舞台几何”和“时间节奏”
+        # ---------------------------
+        ticks = 90            # 总步数（固定）
+        dt = 0.085            # 每步间隔（固定，约 7.6 秒）
+
+        # 莫比乌斯参数（固定）
+        R = 46.0              # 主半径
+        W = 12.0              # 带宽（半宽）
+        sXZ = 0.78            # XZ 速度缩放
+        sY  = 9.5             # y 形变映射强度
+        base_up = 22.0        # 保证 vy 始终为正（固定）
+
+        # intensity 只影响“每步粒子数量”
+        p_main = int(18 * intensity)      # 主织带粒子/步
+        p_stitch = int(6 * intensity)     # 针脚粒子/触发
+        p_crown = int(120 * intensity)    # 终章加冕粒子数
+
+        # ---------------------------
+        # 工具：莫比乌斯带嵌入（u in [0,2pi), v in [-W,W]）
+        # 返回一个 3D 点 (x,y,z)，我们把它映射成“速度向量”
+        # ---------------------------
+        def mobius_point(u, v):
+            cu = math.cos(u)
+            su = math.sin(u)
+            cu2 = math.cos(u * 0.5)
+            su2 = math.sin(u * 0.5)
+
+            x = (R + v * cu2) * cu
+            z = (R + v * cu2) * su
+            y = v * su2
+            return x, y, z
+
+        # ---------------------------
+        # Phase 1：织带成环（持续“雕刻”莫比乌斯带）
+        # ---------------------------
+        for k in range(ticks):
+            # 环绕相位（固定推进）
+            u0 = (2.0 * math.pi) * (k / (ticks - 1))
+
+            # 每步的颜色段（按 u0 映射）
+            col = PAL[int((u0 / (2.0 * math.pi)) * len(PAL)) % len(PAL)]
+
+            # 主织带：在当前 u0 附近撒一圈 “v” 分布，让带子有厚度
+            for i in range(p_main):
+                # u 在当前相位附近做轻微扩展，形成连续丝带
+                u = u0 + (rnd() * 2.0 - 1.0) * 0.22
+
+                # v 选在带宽上：中间多，边缘也有（避免只有一条线）
+                if i % 5 == 0:
+                    v = (1.0 if (i % 10 == 0) else -1.0) * W * (0.85 + 0.10 * rnd())
+                else:
+                    v = (rnd() * 2.0 - 1.0) * W * (0.75 + 0.20 * rnd())
+
+                x, y, z = mobius_point(u, v)
+
+                # 速度向量：XZ 按几何点发散，Y 用 base_up + (y+W)*sY 映射，确保 vy>0
+                vx = x * sXZ + (rnd() * 2.0 - 1.0) * 4.0
+                vz = z * sXZ + (rnd() * 2.0 - 1.0) * 6.0
+                vy = base_up + (y + W) * sY + (rnd() * 2.0 - 1.0) * 3.0  # 永远 > 0
+
+                # 位置围绕中心微抖动，突出“织造”的感觉
+                px = (rnd() * 2.0 - 1.0) * 2.0
+                pz = (rnd() * 2.0 - 1.0) * 2.5
+
+                fire((px, 0.0, pz), (vx, vy, vz), T.nothing, col)
+
+                # 偶尔给边缘一颗“缎光点”
+                if i % 17 == 0:
+                    fire((px, 0.0, pz), (vx * 0.25, vy + 16.0, vz * 0.25), T.circle, (255, 245, 230))
+
+                if i % 18 == 0:
+                    time.sleep(0.0015)
+
+            # -----------------------
+            # 针脚：每隔几步把两侧边缘“缝合”
+            # 视觉：你会看到带子有“被织起来”的工艺感
+            # -----------------------
+            if k % 7 == 0:
+                for j in range(p_stitch):
+                    u = u0 + (j / (p_stitch + 1)) * 0.9
+                    # 两侧边缘 v=±W
+                    x1, y1, z1 = mobius_point(u, +W)
+                    x2, y2, z2 = mobius_point(u, -W)
+
+                    # 用两束相向速度制造“针脚横梁”
+                    vx1 = x1 * 0.58 + (rnd() * 2.0 - 1.0) * 3.0
+                    vz1 = z1 * 0.58 + (rnd() * 2.0 - 1.0) * 4.0
+                    vy1 = base_up + (y1 + W) * (sY * 0.8) + 8.0
+
+                    vx2 = x2 * 0.58 + (rnd() * 2.0 - 1.0) * 3.0
+                    vz2 = z2 * 0.58 + (rnd() * 2.0 - 1.0) * 4.0
+                    vy2 = base_up + (y2 + W) * (sY * 0.8) + 8.0
+
+                    stitch_col = (245, 250, 255) if (j % 2 == 0) else (255, 220, 120)
+                    fire((0.0, 0.0, 0.0), (vx1, vy1, vz1), T.nothing, stitch_col)
+                    fire((0.0, 0.0, 0.0), (vx2, vy2, vz2), T.nothing, stitch_col)
+
+                    if j % 10 == 0:
+                        time.sleep(0.002)
+
+            time.sleep(dt)
+
+        time.sleep(0.20)
+
+        # ---------------------------
+        # Phase 2：丝带加冕（环形外扩 + 白金高光）
+        # ---------------------------
+        for i in range(p_crown):
+            th = (2.0 * math.pi) * (i / (p_crown + 1))
+            # 在莫比乌斯环附近取点，但 v 变小，像“外层光晕”
+            u = th
+            v = (rnd() * 2.0 - 1.0) * (W * 0.35)
+            x, y, z = mobius_point(u, v)
+
+            vx = x * 0.95 + (rnd() * 2.0 - 1.0) * 10.0
+            vz = z * 0.95 + (rnd() * 2.0 - 1.0) * 14.0
+            vy = base_up + (y + W) * (sY * 0.9) + 34.0
+
+            # 白金为主，夹少量紫/青
+            m = i % 9
+            if m == 0:
+                col = (255, 220, 120)
+                ftype = T.planet_random_color
+            elif m == 1:
+                col = (255, 245, 230)
+                ftype = T.circle
+            elif m == 2:
+                col = (190, 90, 255)
+                ftype = T.nothing
+            else:
+                col = (90, 210, 255)
+                ftype = T.nothing
+
+            fire((0.0, 0.0, 0.0), (vx, vy, vz), ftype, col)
+
+            if i % 22 == 0:
+                time.sleep(0.006)
+
+        time.sleep(0.25)
+
+
+
+    def climax_mushroom_cloud(self, intensity=1.0):
+        T = self.type_firework
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 颜色：核心火焰 / 灰烟 / 高光
+        HOT1 = (255, 160, 80)     # 橙
+        HOT2 = (255, 80, 60)      # 红
+        HOT3 = (255, 220, 120)    # 金
+        SMK1 = (70, 80, 95)       # 深灰蓝烟
+        SMK2 = (110, 120, 140)    # 灰
+        ASH  = (190, 200, 210)    # 灰白
+        WHITE = (255, 245, 230)
+
+        # ---------------------------
+        # 固定时间节奏（不受 intensity 影响）
+        # ---------------------------
+        dt = 0.06
+
+        # ---------------------------
+        # intensity 只控制“数量”
+        # ---------------------------
+        ground_flash = int(18 * intensity)
+        column_ticks = 28
+        column_per_tick = int(20 * intensity)
+
+        cap_burst = int(120 * intensity)
+        roll_ticks = 20
+        roll_per_tick = int(28 * intensity)
+
+        ash_ticks = 22
+        ash_per_tick = int(22 * intensity)
+
+        # ==========================================================
+        # Phase 0：地面闪燃（很短，告诉观众“爆点在这里”）
+        # ==========================================================
+        for i in range(ground_flash):
+            th = 2.0 * math.pi * rnd()
+            rad = 6.0 + 10.0 * rnd()
+            x = math.cos(th) * rad * 0.45
+            z = math.sin(th) * rad * 0.45
+
+            vx = math.cos(th) * (18.0 + 18.0 * rnd())
+            vz = math.sin(th) * (18.0 + 22.0 * rnd())
+            vy = 26.0 + 10.0 * rnd()  # >0
+
+            col = HOT3 if i % 5 == 0 else (HOT2 if i % 2 == 0 else HOT1)
+            ftype = T.circle if i % 4 == 0 else T.nothing
+            fire((x, 0.0, z), (vx, vy, vz), ftype, col)
+
+            if i % 8 == 0:
+                time.sleep(0.006)
+
+        time.sleep(0.12)
+
+        # ==========================================================
+        # Phase 1：垂直火柱（蘑菇云“杆”）
+        # 关键：vx/vz 很小，vy 很大，让方向非常明确
+        # ==========================================================
+        for k in range(column_ticks):
+            t = k / (column_ticks - 1)
+
+            for i in range(column_per_tick):
+                # 柱体半径：下粗上稍细（但仍然是柱）
+                r = (10.0 - 4.0 * t) * (0.25 + 0.75 * rnd())
+                th = 2.0 * math.pi * rnd()
+
+                px = math.cos(th) * r
+                pz = math.sin(th) * r
+
+                vx = (rnd() * 2.0 - 1.0) * 3.0
+                vz = (rnd() * 2.0 - 1.0) * 4.5
+
+                # vy 固定很高（不随 intensity），逐步增强到顶端
+                vy = 54.0 + 36.0 * t + 8.0 * rnd()  # >0
+
+                # 颜色：柱芯热，外缘烟
+                if i % 7 == 0:
+                    col = HOT3
+                    ftype = T.circle
+                elif i % 3 == 0:
+                    col = HOT1
+                    ftype = T.nothing
+                else:
+                    col = SMK1
+                    ftype = T.nothing
+
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 18 == 0:
+                    time.sleep(0.0015)
+
+            time.sleep(dt)
+
+        time.sleep(0.10)
+
+        # ==========================================================
+        # Phase 2：顶部伞盖爆开（蘑菇“帽”）
+        # 关键：vx/vz 强烈向外，vy 中等偏高，形成伞状扩张
+        # ==========================================================
+        for i in range(cap_burst):
+            th = 2.0 * math.pi * (i / (cap_burst + 1))
+            # 伞盖的“半径层”：中心少、边缘多（让帽子外轮廓更明显）
+            layer = rnd() ** 0.45
+            rad = 22.0 + 48.0 * layer
+
+            # 伞盖初始位置稍微抬高（靠速度表达），这里 pos 仍用地面点
+            px = (rnd() * 2.0 - 1.0) * 3.5
+            pz = (rnd() * 2.0 - 1.0) * 4.0
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vz = math.sin(th) * (rad * 1.10) + (rnd() * 2.0 - 1.0) * 14.0
+            vy = 46.0 + 12.0 * rnd()  # >0
+
+            # 热核少量点睛，主体用烟/灰，让“蘑菇云”而不是烟花球
+            if i % 17 == 0:
+                col = HOT2
+                ftype = T.planet_random_color
+            elif i % 5 == 0:
+                col = ASH
+                ftype = T.circle
+            else:
+                col = SMK2
+                ftype = T.nothing
+
+            fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+            if i % 24 == 0:
+                time.sleep(0.004)
+
+        time.sleep(0.14)
+
+        # ==========================================================
+        # Phase 3：伞盖边缘翻滚环（“卷边”是蘑菇云灵魂）
+        # 关键：做一个环带，速度切向 + 径向小扰动，形成翻滚感
+        # ==========================================================
+        ring_R = 70.0
+        for k in range(roll_ticks):
+            u = k / (roll_ticks - 1)
+
+            # 卷边随时间“呼吸”，更像在滚动
+            breathe = 0.80 + 0.55 * math.sin(u * math.pi)
+
+            for i in range(roll_per_tick):
+                th = 2.0 * math.pi * rnd()
+
+                # 环带位置（仍用 pos 在地面附近，靠速度做形态）
+                px = (rnd() * 2.0 - 1.0) * 3.0
+                pz = (rnd() * 2.0 - 1.0) * 3.5
+
+                # 环的切向方向
+                tx = -math.sin(th)
+                tz =  math.cos(th)
+
+                # 径向方向
+                rx = math.cos(th)
+                rz = math.sin(th)
+
+                # 切向主导：翻滚环绕；径向轻微内外摆动
+                spin = 34.0 * breathe
+                puff = 14.0 * math.sin(2.0 * th + 3.0 * u)
+
+                vx = tx * spin + rx * puff + (rnd() * 2.0 - 1.0) * 6.0
+                vz = tz * (spin * 1.05) + rz * puff + (rnd() * 2.0 - 1.0) * 8.0
+
+                # vy 维持上抬，让环处在“帽子边缘高度感”
+                vy = 40.0 + 10.0 * breathe + 6.0 * rnd()  # >0
+
+                # 颜色以烟为主，偶尔给灰白高光强调卷边
+                if i % 11 == 0:
+                    col = ASH
+                    ftype = T.circle
+                else:
+                    col = SMK1 if i % 3 else SMK2
+                    ftype = T.nothing
+
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 20 == 0:
+                    time.sleep(0.0018)
+
+            time.sleep(dt)
+
+        time.sleep(0.12)
+
+        # ==========================================================
+        # Phase 4：灰烬烟尘持续上涌（收尾让蘑菇云“留在天上”）
+        # ==========================================================
+        for k in range(ash_ticks):
+            for i in range(ash_per_tick):
+                th = 2.0 * math.pi * rnd()
+                rad = 18.0 + 34.0 * rnd()
+
+                px = math.cos(th) * rad * 0.35
+                pz = math.sin(th) * rad * 0.35
+
+                vx = math.cos(th) * (10.0 + 12.0 * rnd()) + (rnd() * 2.0 - 1.0) * 6.0
+                vz = math.sin(th) * (12.0 + 16.0 * rnd()) + (rnd() * 2.0 - 1.0) * 8.0
+                vy = 26.0 + 10.0 * rnd()  # >0
+
+                col = ASH if i % 4 == 0 else (SMK2 if i % 2 == 0 else SMK1)
+                ftype = T.nothing if i % 6 else T.circle
+                fire((px, 0.0, pz), (vx, vy, vz), ftype, col)
+
+                if i % 18 == 0:
+                    time.sleep(0.0016)
+
+            time.sleep(0.05)
+
+        time.sleep(0.25)
+
+
+    def climax_prism_cathedral_overdrive(self, intensity=1.0):
+        T = self.type_firework
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 颜色（棱镜+极光+白金高光）
+        PEARL = (255, 245, 230)
+        ICE   = (245, 250, 255)
+        CYAN  = (90, 210, 255)
+        BLUE  = (60, 120, 255)
+        VIO   = (190, 90, 255)
+        ROSE  = (255, 120, 200)
+        GOLD  = (255, 220, 120)
+        MINT  = (160, 255, 220)
+
+        # intensity 只控制数量
+        frame_density = int(180 * intensity) + 180      # 框架“常亮”点数
+        curtain_per_tick = int(42 * intensity) + 40     # 极光帷幕每拍数量
+        shell_count = int(260 * intensity) + 240        # 半球壳总粒子
+        crown_count = int(220 * intensity) + 220        # 王冠收束粒子
+        spark_count = int(26 * intensity) + 22          # 少量点睛闪点（避免糊）
+
+        # 固定节奏（不随 intensity 变化）
+        dt_frame = 0.055
+        dt_curtain = 0.065
+        dt_shell = 0.06
+
+        # ==============================
+        # Phase 1：3D 棱镜圣殿框架（关键：pos.y 直接“画”出结构）
+        # ==============================
+        # 做一个“高耸的棱镜盒体”：底面 y=0..8，顶部 y=56..64
+        W = 90.0     # 横向尺度
+        D = 60.0     # 纵深尺度
+        y_bot = 2.0
+        y_top = 62.0
+
+        # 8 个角点（x,z）+ 两层 y
+        corners = [
+            (-W, -D), ( W, -D), ( W,  D), (-W,  D)
+        ]
+
+        # 框架边：底面、顶面、竖边
+        edges = []
+        # 底面环
+        for i in range(4):
+            a = corners[i]
+            b = corners[(i + 1) % 4]
+            edges.append((a, b, y_bot, y_bot))
+        # 顶面环
+        for i in range(4):
+            a = corners[i]
+            b = corners[(i + 1) % 4]
+            edges.append((a, b, y_top, y_top))
+        # 竖边
+        for i in range(4):
+            a = corners[i]
+            edges.append((a, a, y_bot, y_top))
+
+        # 再加两条“斜脊梁”（让它更像圣殿而不是普通盒子）
+        edges.append((corners[0], corners[2], y_top, y_top))
+        edges.append((corners[1], corners[3], y_top, y_top))
+
+        # 框架“发射”策略：在边上采样点（pos），给近似竖直速度（vel） → 线条非常清晰
+        samples_per_edge = 28
+        strands = 2
+
+        for pass_id in range(3):  # 刷新三次，保证“常亮感”
+            for (a, b, ya, yb) in edges:
+                x0, z0 = a
+                x1, z1 = b
+
+                for s in range(samples_per_edge):
+                    u = s / (samples_per_edge - 1)
+                    px = x0 + (x1 - x0) * u
+                    pz = z0 + (z1 - z0) * u
+                    py = ya + (yb - ya) * u
+
+                    # 速度：几乎竖直，微抖动让它像能量线
+                    for k in range(strands):
+                        vx = (rnd() * 2.0 - 1.0) * 1.6
+                        vz = (rnd() * 2.0 - 1.0) * 2.0
+                        vy = 28.0 + 10.0 * rnd()  # >0
+
+                        # 颜色：顶面更亮、底面偏冷，脊梁用白金
+                        if abs(py - y_top) < 2.0:
+                            col = PEARL if (s % 9 == 0) else ICE
+                        elif abs(py - y_bot) < 2.0:
+                            col = BLUE if (s % 7 == 0) else CYAN
+                        else:
+                            col = VIO if (pass_id % 2 == 0) else CYAN
+
+                        # 脊梁高光
+                        if (a == corners[0] and b == corners[2]) or (a == corners[1] and b == corners[3]):
+                            col = GOLD if (s % 6 == 0) else PEARL
+
+                        fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                    if s % 9 == 0:
+                        time.sleep(0.0015)
+
+            # 角点锁定闪点（很少，但会让结构“立住”）
+            for (cx, cz) in corners:
+                fire((cx, y_bot, cz), (0.0, 46.0, 0.0), T.circle, CYAN)
+                fire((cx, y_top, cz), (0.0, 56.0, 0.0), T.circle, PEARL)
+
+            time.sleep(dt_frame)
+
+        time.sleep(0.18)
+
+        # ==============================
+        # Phase 2：极光帷幕（在框架内部“垂挂”出 3D 光幕）
+        # ==============================
+        curtain_ticks = 26
+        for k in range(curtain_ticks):
+            t = k / (curtain_ticks - 1)
+
+            # 帷幕从低到高逐渐“填满”
+            y0 = 10.0 + 44.0 * t
+
+            for i in range(curtain_per_tick):
+                # 在框架内部随机取一条“帷幕线”位置
+                px = (rnd() * 2.0 - 1.0) * (W * 0.75)
+                pz = (rnd() * 2.0 - 1.0) * (D * 0.70)
+                py = y0 + (rnd() * 2.0 - 1.0) * 6.0
+
+                # 速度：向上为主 + 一点横向摆动（像帷幕抖动）
+                vx = (rnd() * 2.0 - 1.0) * 6.0
+                vz = (rnd() * 2.0 - 1.0) * 10.0
+                vy = 34.0 + 18.0 * rnd()  # >0
+
+                # 颜色随“帷幕相位”变化，产生极光渐变
+                m = (i + k) % 6
+                if m == 0:
+                    col = CYAN
+                elif m == 1:
+                    col = MINT
+                elif m == 2:
+                    col = VIO
+                elif m == 3:
+                    col = ROSE
+                elif m == 4:
+                    col = ICE
+                else:
+                    col = BLUE
+
+                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                # 少量“极光结点”闪一下（不要太多）
+                if i % 19 == 0:
+                    fire((px, py, pz), (vx * 0.25, vy + 20.0, vz * 0.25), T.circle, PEARL)
+
+                if i % 22 == 0:
+                    time.sleep(0.0018)
+
+            time.sleep(dt_curtain)
+
+        time.sleep(0.18)
+
+        # ==============================
+        # Phase 3：三层半球壳同爆（地面/中空/高空）——超级壮观的“体积高潮”
+        # ==============================
+        # 关键：从不同 y 的“发射源”同时做上半球扩张，观众会看到巨大 3D 体积
+        sources = [
+            (0.0, 0.0, 0.0),
+            (0.0, 26.0, 0.0),
+            (0.0, 52.0, 0.0),
+        ]
+
+        # 上半球采样：保证 vy>0（polar angle 0..pi/2）
+        for s_idx, (sx, sy, sz) in enumerate(sources):
+            # 每层给不同色相倾向
+            layer_bias = s_idx % 3
+
+            for i in range(shell_count // 3):
+                th = 2.0 * math.pi * rnd()
+                # 只取上半球：cos(phi) in [0,1]
+                c = rnd()  # 0..1
+                phi = math.acos(c)  # 0..pi/2
+
+                # 半径强烈（让它“巨大”）
+                rad = 46.0 + 70.0 * rnd()
+
+                ux = math.cos(th) * math.sin(phi)
+                uy = math.cos(phi)              # >=0
+                uz = math.sin(th) * math.sin(phi)
+
+                vx = ux * rad + (rnd() * 2.0 - 1.0) * 14.0
+                vy = 44.0 + uy * 58.0 + 10.0 * rnd()  # >0 且很高
+                vz = uz * (rad * 1.12) + (rnd() * 2.0 - 1.0) * 18.0
+
+                # 颜色分层：底层更彩，中层更冷，高层更白金
+                m = (i + s_idx) % 7
+                if layer_bias == 0:
+                    col = [CYAN, VIO, ROSE, BLUE, ICE, MINT, PEARL][m]
+                elif layer_bias == 1:
+                    col = [ICE, CYAN, BLUE, VIO, MINT, PEARL, GOLD][m]
+                else:
+                    col = [PEARL, GOLD, ICE, CYAN, VIO, PEARL, GOLD][m]
+
+                # 点睛：少量爆炸类型，其余用 nothing 保证连续光轨体积
+                if i % 17 == 0:
+                    ftype = T.planet_random_color
+                elif i % 29 == 0:
+                    ftype = T.mixed_color_ball
+                else:
+                    ftype = T.nothing
+
+                fire((sx, sy, sz), (vx, vy, vz), ftype, col)
+
+                if i % 24 == 0:
+                    time.sleep(0.0035)
+
+            time.sleep(0.06)
+
+        time.sleep(0.18)
+
+        # ==============================
+        # Phase 4：高空“王冠加冕”（在 y=72 左右爆出一圈巨型冠冕）
+        # ==============================
+        crown_y = 72.0
+        for i in range(crown_count):
+            th = 2.0 * math.pi * (i / (crown_count + 1))
+            rad = 28.0 + 44.0 * rnd()
+
+            px = math.cos(th) * 6.0
+            pz = math.sin(th) * 6.0
+            py = crown_y + (rnd() * 2.0 - 1.0) * 3.0
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vz = math.sin(th) * (rad * 1.18) + (rnd() * 2.0 - 1.0) * 14.0
+            vy = 50.0 + 18.0 * rnd()  # >0
+
+            # 白金为主，夹少量紫/青“棱镜折射”
+            if i % 13 == 0:
+                ftype = T.circle
+                col = GOLD
+            elif i % 7 == 0:
+                ftype = T.planet_ball
+                col = PEARL
+            else:
+                ftype = T.nothing
+                col = VIO if (i % 3 == 0) else (CYAN if i % 3 == 1 else ICE)
+
+            fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+            if i % 22 == 0:
+                time.sleep(0.005)
+
+        # 最后再补一圈“星火”让冠冕更炸裂但不糊
+        for i in range(spark_count):
+            th = 2.0 * math.pi * rnd()
+            rad = 18.0 + 20.0 * rnd()
+            px = (rnd() * 2.0 - 1.0) * 4.0
+            pz = (rnd() * 2.0 - 1.0) * 4.0
+            py = crown_y + (rnd() * 2.0 - 1.0) * 2.0
+
+            vx = math.cos(th) * rad + (rnd() * 2.0 - 1.0) * 8.0
+            vz = math.sin(th) * rad + (rnd() * 2.0 - 1.0) * 10.0
+            vy = 62.0 + 12.0 * rnd()
+
+            fire((px, py, pz), (vx, vy, vz), T.circle, PEARL)
+
+            if i % 10 == 0:
+                time.sleep(0.01)
+
+        time.sleep(0.25)
+
+    def climax_blackhole_lens_cathedral(self, intensity=1.0):
+        T = self.type_firework
+
+        def fire(pos, vel, ftype, color):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 色彩：深空/冰蓝/紫/白金
+        VOID  = (10, 12, 28)
+        DEEP  = (40, 80, 180)
+        CYAN  = (90, 210, 255)
+        VIO   = (190, 90, 255)
+        ROSE  = (255, 120, 200)
+        ICE   = (245, 250, 255)
+        PEARL = (255, 245, 230)
+        GOLD  = (255, 220, 120)
+        MINT  = (160, 255, 220)
+
+        jewel_pool = [T.circle, T.planet_ball, T.planet_random_color, T.mixed_color_ball, T.double_ball]
+
+        # intensity 只控制数量
+        ring_count = int(240 * intensity) + 220
+        lens_ticks = 28
+        lens_per_tick = int(70 * intensity) + 60
+        shear_per_tick = int(34 * intensity) + 30
+        jet_count = int(240 * intensity) + 220
+        halo_count = int(200 * intensity) + 200
+
+        # 固定节奏（不随 intensity）
+        dt = 0.06
+        dt2 = 0.05
+
+        # 黑洞/透镜几何（固定）
+        cx, cy, cz = 0.0, 46.0, 0.0        # 透镜中心在高空
+        R0 = 62.0                           # 透镜主环半径
+        R1 = 92.0                           # 透镜外壳范围
+        throat = 14.0                       # “黑洞喉口”尺度（吸入感）
+
+        # ==========================================================
+        # Phase 1：高空“引力透镜主环”（pos.y 直接画出环）
+        # ==========================================================
+        for i in range(ring_count):
+            th = 2.0 * math.pi * (i / (ring_count + 1))
+            # 环在 y=cy 周围有一点厚度
+            py = cy + (rnd() * 2.0 - 1.0) * 3.0
+            # 环的位置在高空
+            px = cx + math.cos(th) * R0
+            pz = cz + math.sin(th) * R0
+
+            # 速度：沿切向轻轻滑动 + 向上（让环“活”）
+            tx = -math.sin(th)
+            tz =  math.cos(th)
+            vx = tx * (18.0 + 10.0 * rnd()) + (rnd() * 2.0 - 1.0) * 3.0
+            vz = tz * (20.0 + 12.0 * rnd()) + (rnd() * 2.0 - 1.0) * 4.5
+            vy = 22.0 + 8.0 * rnd()  # >0
+
+            # 颜色：白金/冰蓝交替，偶尔紫辉
+            if i % 11 == 0:
+                col = GOLD
+                ftype = T.circle
+            elif i % 5 == 0:
+                col = VIO
+                ftype = T.nothing
+            else:
+                col = ICE if (i % 2 == 0) else CYAN
+                ftype = T.nothing
+
+            fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+            if i % 26 == 0:
+                time.sleep(0.005)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 2：透镜弯折光束（从不同高度/不同方位射入，然后“掠过”中心变向）
+        # 关键：pos 在空间分布，vel 带强烈“绕行中心”的切向分量
+        # ==========================================================
+        for k in range(lens_ticks):
+            t = k / (lens_ticks - 1)
+
+            # 透镜壳随时间更大：从 R0 -> R1
+            shellR = R0 + (R1 - R0) * (0.25 + 0.75 * t)
+
+            # 1) 主体光束：像被引力弯折，绕着中心掠过
+            for i in range(lens_per_tick):
+                # 采样一条入射方向
+                th = 2.0 * math.pi * rnd()
+
+                # 入射点：在壳上某处，y 有层次（真正 3D）
+                py = (14.0 + 70.0 * rnd())
+                px = math.cos(th) * shellR
+                pz = math.sin(th) * shellR
+
+                # 指向中心的径向
+                rx = (cx - px)
+                ry = (cy - py)
+                rz = (cz - pz)
+                rm = (rx*rx + ry*ry + rz*rz) ** 0.5 + 1e-6
+                rx, ry, rz = rx/rm, ry/rm, rz/rm
+
+                # 切向方向：在 XZ 平面绕行（引力透镜“弯折”感）
+                tx = -math.sin(th)
+                tz =  math.cos(th)
+
+                # 速度：径向吸向中心 + 强切向绕行 + 向上保持
+                vx = rx * 26.0 + tx * 46.0 + (rnd() * 2.0 - 1.0) * 10.0
+                vz = rz * 30.0 + tz * 52.0 + (rnd() * 2.0 - 1.0) * 14.0
+                vy = 26.0 + (0.5 + 0.5 * math.sin(th + 2.2 * t)) * 44.0 + 6.0 * rnd()  # >0
+
+                # 颜色：冷到暖的“光谱折射”
+                m = (i + k) % 7
+                if m == 0:
+                    col = CYAN
+                elif m == 1:
+                    col = MINT
+                elif m == 2:
+                    col = VIO
+                elif m == 3:
+                    col = ROSE
+                elif m == 4:
+                    col = ICE
+                elif m == 5:
+                    col = GOLD
+                else:
+                    col = DEEP
+
+                # 少量 jewel 点睛
+                if i % 23 == 0:
+                    ftype = jewel_pool[(i + k) % len(jewel_pool)]
+                else:
+                    ftype = T.nothing
+
+                fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+                if i % 30 == 0:
+                    time.sleep(0.0018)
+
+            # 2) “喉口剪切层”：更靠近中心的薄环流，增强黑洞吞噬感
+            for i in range(shear_per_tick):
+                th = 2.0 * math.pi * rnd()
+                r = throat + 10.0 * rnd()
+
+                px = cx + math.cos(th) * r
+                pz = cz + math.sin(th) * r
+                py = cy + (rnd() * 2.0 - 1.0) * 10.0
+
+                tx = -math.sin(th)
+                tz =  math.cos(th)
+
+                vx = tx * (70.0 + 18.0 * rnd()) + (rnd() * 2.0 - 1.0) * 10.0
+                vz = tz * (76.0 + 22.0 * rnd()) + (rnd() * 2.0 - 1.0) * 14.0
+                vy = 22.0 + 14.0 * rnd()  # >0
+
+                col = VOID if i % 5 else PEARL
+                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % 22 == 0:
+                    time.sleep(0.0015)
+
+            time.sleep(dt)
+
+        time.sleep(0.18)
+
+        # ==========================================================
+        # Phase 3：白金喷流 Jet（从中心直上贯穿天空，极其震撼）
+        # ==========================================================
+        for i in range(jet_count):
+            # 喷流从中心附近不同高度发射，形成“柱状穿透”
+            px = cx + (rnd() * 2.0 - 1.0) * 3.0
+            pz = cz + (rnd() * 2.0 - 1.0) * 3.5
+            py = cy - 10.0 + (rnd() * 2.0 - 1.0) * 6.0
+
+            # 速度几乎纯竖直 + 微扩散
+            vx = (rnd() * 2.0 - 1.0) * 9.0
+            vz = (rnd() * 2.0 - 1.0) * 12.0
+            vy = 86.0 + 28.0 * rnd()  # >0 且很高
+
+            # 颜色：白金为主，夹少量冷蓝电晕
+            if i % 17 == 0:
+                col = GOLD
+                ftype = T.planet_random_color
+            elif i % 7 == 0:
+                col = PEARL
+                ftype = T.circle
+            else:
+                col = ICE if (i % 2 == 0) else CYAN
+                ftype = T.nothing
+
+            fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+            if i % 26 == 0:
+                time.sleep(0.004)
+
+        time.sleep(0.12)
+
+        # ==========================================================
+        # Phase 4：彩色薄环 Halo（喷流周围出现多个彩环收束）
+        # ==========================================================
+        for i in range(halo_count):
+            th = 2.0 * math.pi * (i / (halo_count + 1))
+            # 多个环：y 分层
+            py = cy + 8.0 + (i % 6) * 6.0 + (rnd() * 2.0 - 1.0) * 2.0
+            rr = 26.0 + 34.0 * rnd()
+
+            px = cx + math.cos(th) * rr
+            pz = cz + math.sin(th) * rr
+
+            # 速度：向外+向上，让环“绽放”
+            vx = math.cos(th) * (22.0 + 20.0 * rnd()) + (rnd() * 2.0 - 1.0) * 8.0
+            vz = math.sin(th) * (26.0 + 22.0 * rnd()) + (rnd() * 2.0 - 1.0) * 10.0
+            vy = 52.0 + 16.0 * rnd()
+
+            m = i % 6
+            if m == 0:
+                col = CYAN
+            elif m == 1:
+                col = MINT
+            elif m == 2:
+                col = VIO
+            elif m == 3:
+                col = ROSE
+            elif m == 4:
+                col = GOLD
+            else:
+                col = PEARL
+
+            ftype = T.nothing if i % 11 else T.circle
+            fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+            if i % 24 == 0:
+                time.sleep(0.004)
+
+        time.sleep(0.25)
+
+    def climax_2min_continuous(self, intensity=1.0):
+        T = self.type_firework
+        NYE=generate_func_type(self.type_firework.happy_birthday,self.type_firework.new_year)
+        This_year=generate_func_type(self.type_firework.happy_birthday,self.type_firework.this_year)
+
+        # intensity 只控制数量；为避免 intensity<=0 导致数量为0，这里做最小保护
+        
+        intensity = 0.5
+
+        def fire(pos, vel, ftype, color=(-1, -1, -1)):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # 伪随机（不依赖 random）
+        seed = int(time.time() * 1000) & 0x7fffffff
+        def rnd():
+            nonlocal seed
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff
+            return seed / 0x7fffffff
+
+        # 色板（主舞台：白金 + 冰蓝 + 霓虹紫粉）
+        PEARL = (255, 245, 230)
+        GOLD  = (255, 220, 120)
+        ICE   = (245, 250, 255)
+        CYAN  = (90, 210, 255)
+        BLUE  = (60, 120, 255)
+        VIO   = (190, 90, 255)
+        ROSE  = (255, 120, 200)
+        MINT  = (160, 255, 220)
+        DEEP  = (20, 26, 70)
+
+        burst_pool = [
+            T.circle,
+            T.ball,
+            T.double_ball,
+            T.planet_ball,
+            T.planet_random_color,
+            T.half_half_color_ball,
+            T.mixed_color_ball,
+            T.random_color,
+            T.ball_up
+        ]
+
+        # =========================
+        # 2 分钟全程节奏（固定，不随 intensity 变）
+        # =========================
+        SHOW_SECONDS = 10.0
+        tick = 0.24  # 每拍间隔；全程约 500 拍，连续但仍可控
+        start = time.time()
+
+        # intensity 只控制数量
+        N_SIDE = int(10 * intensity) + 10          # 两侧底部“旁白”喷射数量/拍
+        N_MID  = int(14 * intensity) + 14          # 中空结构数量/拍
+        N_HIGH = int(10 * intensity) + 10          # 高空壳层数量/拍
+        N_SPARK = int(4 * intensity) + 3           # 点睛闪点/拍（少量但关键）
+
+        # 大事件数量（随 intensity 只加密度，不改速度/节奏）
+        N_SHOCK = int(70 * intensity) + 70         # “震波壳”一次的粒子数
+        N_CROWN = int(110 * intensity) + 110       # “王冠环”一次的粒子数
+        N_JET   = int(90 * intensity) + 90         # “穿云喷流”一次的粒子数
+
+        # 舞台尺度（固定）
+        X = 110.0
+        Z = 80.0
+
+        # =========================
+        # 子模块：底部两侧“节奏旁白”（不抢主戏，但保证一直高潮）
+        # =========================
+        def emit_side_barrage(phase, beat):
+            # 左右两侧，规律每次都变一点（避免重复）
+            for s in range(N_SIDE):
+                side = -1.0 if (s % 2 == 0) else 1.0
+                px = side * (70.0 + 18.0 * (rnd() * 2.0 - 1.0))
+                py = 0.0 + 3.0 * rnd()
+                pz = (rnd() * 2.0 - 1.0) * 22.0
+
+                # 速度：强上抬 + 少量横向“扫”
+                vx = side * (6.0 + 10.0 * rnd()) + (rnd() * 2.0 - 1.0) * 4.0
+                vz = (rnd() * 2.0 - 1.0) * (18.0 + 10.0 * rnd())
+                vy = 34.0 + 22.0 * rnd()  # >0
+
+                # 颜色：随 phase 变换冷暖
+                m = (beat + s) % 6
+                if phase < 0.5:
+                    col = [CYAN, BLUE, ICE, CYAN, MINT, PEARL][m]
+                else:
+                    col = [ROSE, VIO, PEARL, GOLD, CYAN, ICE][m]
+
+                # 大多数用 nothing 形成光轨
+                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                # 少量小闪点让两侧更“炫”
+                if s % 9 == 0:
+                    fire((px, py, pz), (vx * 0.25, vy + 18.0, vz * 0.25), T.circle, PEARL)
+
+        # =========================
+        # 子模块：中空“棱镜拱脉冲”（pos.y 参与构型，3D 结构强）
+        # =========================
+        def emit_mid_arches(phase, beat):
+            y0 = 18.0 + 24.0 * (0.5 + 0.5 * math.sin(phase * math.pi * 2.0))
+            for i in range(N_MID):
+                # 从四个象限“拱起”到中心上方
+                quad = i % 4
+                px = ( -55.0 if quad in (0, 3) else 55.0 ) + (rnd() * 2.0 - 1.0) * 18.0
+                pz = ( -45.0 if quad in (0, 1) else 45.0 ) + (rnd() * 2.0 - 1.0) * 16.0
+                py = y0 + (rnd() * 2.0 - 1.0) * 6.0
+
+                # 向中心吸 + 轻切向，形成“拱脉冲”
+                vx = (-px) * 0.20 + (rnd() * 2.0 - 1.0) * 10.0
+                vz = (-pz) * 0.20 + (rnd() * 2.0 - 1.0) * 14.0
+                vy = 38.0 + 28.0 * rnd()
+
+                # 颜色：中空更霓虹
+                m = (i + beat) % 7
+                col = [VIO, CYAN, ROSE, ICE, MINT, BLUE, PEARL][m]
+
+                # 偶尔用 burst 类型点亮“拱门节点”
+                if i % 11 == 0:
+                    ftype = burst_pool[(i + beat) % len(burst_pool)]
+                else:
+                    ftype = T.nothing
+
+                fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+        # =========================
+        # 子模块：高空“天穹壳层”（真正“天空很大”的感觉）
+        # =========================
+        def emit_high_shell(phase, beat):
+            cy = 62.0 + 18.0 * math.sin(phase * math.pi * 2.0 + 1.2)
+            for i in range(N_HIGH):
+                # 在高空环带上取发射点（pos.y 高）
+                th = 2.0 * math.pi * rnd()
+                rr = 36.0 + 54.0 * rnd()
+
+                px = math.cos(th) * rr
+                pz = math.sin(th) * rr
+                py = cy + (rnd() * 2.0 - 1.0) * 6.0
+
+                # outward + upward：壳层扩张
+                vx = math.cos(th) * (28.0 + 26.0 * rnd()) + (rnd() * 2.0 - 1.0) * 10.0
+                vz = math.sin(th) * (34.0 + 32.0 * rnd()) + (rnd() * 2.0 - 1.0) * 14.0
+                vy = 44.0 + 22.0 * rnd()
+
+                m = (beat + i) % 8
+                col = [ICE, PEARL, CYAN, BLUE, VIO, ROSE, GOLD, MINT][m]
+
+                if i % 8 == 0:
+                    ftype = T.planet_random_color
+                else:
+                    ftype = T.nothing
+
+                fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+            # 少量“星火点睛”
+            for j in range(N_SPARK):
+                th = 2.0 * math.pi * rnd()
+                px = 0.0 + math.cos(th) * (8.0 + 8.0 * rnd())
+                pz = 0.0 + math.sin(th) * (8.0 + 8.0 * rnd())
+                py = cy + 8.0 + (rnd() * 2.0 - 1.0) * 3.0
+                vx = math.cos(th) * (18.0 + 18.0 * rnd())
+                vz = math.sin(th) * (22.0 + 20.0 * rnd())
+                vy = 60.0 + 16.0 * rnd()
+                fire((px, py, pz), (vx, vy, vz), T.circle, PEARL)
+
+        # =========================
+        # 大事件A：360° 震波壳（一次就很震撼）
+        # =========================
+        def shockwave_shell(center_y, warm=False):
+            for i in range(N_SHOCK):
+                th = 2.0 * math.pi * (i / (N_SHOCK + 1))
+                # 上半球为主（更像天穹炸开）
+                c = rnd()  # 0..1
+                phi = math.acos(c)  # 0..pi/2
+                rad = 58.0 + 88.0 * rnd()
+
+                ux = math.cos(th) * math.sin(phi)
+                uy = math.cos(phi)        # >=0
+                uz = math.sin(th) * math.sin(phi)
+
+                px = 0.0
+                py = center_y + (rnd() * 2.0 - 1.0) * 3.0
+                pz = 0.0
+
+                vx = ux * rad + (rnd() * 2.0 - 1.0) * 14.0
+                vz = uz * (rad * 1.15) + (rnd() * 2.0 - 1.0) * 18.0
+                vy = 52.0 + uy * 62.0 + 10.0 * rnd()
+
+                if warm:
+                    col = GOLD if (i % 5 == 0) else (PEARL if i % 3 == 0 else ROSE)
+                else:
+                    col = ICE if (i % 4 == 0) else (CYAN if i % 3 == 0 else VIO)
+
+                ftype = T.mixed_color_ball if (i % 17 == 0) else T.nothing
+                fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+                if i % 26 == 0:
+                    time.sleep(0.0035)
+
+        # =========================
+        # 大事件B：穿云喷流（从多高度一起喷）
+        # =========================
+        def triple_jet():
+            jets = [(0.0, 0.0, 0.0), (0.0, 22.0, 0.0), (0.0, 44.0, 0.0)]
+            for (px0, py0, pz0) in jets:
+                for i in range(N_JET // 3):
+                    px = px0 + (rnd() * 2.0 - 1.0) * 4.0
+                    py = py0 + (rnd() * 2.0 - 1.0) * 3.0
+                    pz = pz0 + (rnd() * 2.0 - 1.0) * 4.5
+
+                    vx = (rnd() * 2.0 - 1.0) * 12.0
+                    vz = (rnd() * 2.0 - 1.0) * 18.0
+                    vy = 92.0 + 34.0 * rnd()
+
+                    if i % 9 == 0:
+                        col = GOLD
+                        ftype = T.planet_random_color
+                    elif i % 4 == 0:
+                        col = PEARL
+                        ftype = T.circle
+                    else:
+                        col = ICE if (i % 2 == 0) else CYAN
+                        ftype = T.nothing
+
+                    fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+                    if i % 22 == 0:
+                        time.sleep(0.004)
+
+        # =========================
+        # 大事件C：高空王冠环（极强收束感）
+        # =========================
+        def crown_ring(yc):
+            for i in range(N_CROWN):
+                th = 2.0 * math.pi * (i / (N_CROWN + 1))
+                rr = 34.0 + 60.0 * rnd()
+
+                px = 0.0 + math.cos(th) * 8.0
+                pz = 0.0 + math.sin(th) * 8.0
+                py = yc + (rnd() * 2.0 - 1.0) * 3.0
+
+                vx = math.cos(th) * rr + (rnd() * 2.0 - 1.0) * 10.0
+                vz = math.sin(th) * (rr * 1.20) + (rnd() * 2.0 - 1.0) * 14.0
+                vy = 56.0 + 18.0 * rnd()
+
+                if i % 13 == 0:
+                    ftype = T.circle
+                    col = GOLD
+                elif i % 7 == 0:
+                    ftype = T.planet_ball
+                    col = PEARL
+                else:
+                    ftype = T.nothing
+                    col = VIO if (i % 3 == 0) else (CYAN if i % 3 == 1 else ICE)
+
+                fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+                if i % 22 == 0:
+                    time.sleep(0.005)
+
+        # =========================
+        # 中间插入文字：NYE + This_year（必须插在中段）
+        # =========================
+        def insert_text_block():
+            # 给文字留“可读空间”：仍然高潮，但把中心周围改成框架/两侧护航
+            # 1) 两侧护航光柱
+            for j in range(int(50 * intensity) + 40):
+                side = -1.0 if (j % 2 == 0) else 1.0
+                px = side * 85.0 + (rnd() * 2.0 - 1.0) * 6.0
+                py = 0.0 + 10.0 * rnd()
+                pz = (rnd() * 2.0 - 1.0) * 18.0
+                vx = (rnd() * 2.0 - 1.0) * 4.0
+                vz = (rnd() * 2.0 - 1.0) * 6.0
+                vy = 58.0 + 20.0 * rnd()
+                fire((px, py, pz), (vx, vy, vz), T.nothing, ICE if j % 3 else CYAN)
+                if j % 18 == 0:
+                    time.sleep(0.004)
+
+            # 2) 插入 NYE（按你指定格式）
+            self.firework_generator.generate_firework_thread(
+                (0.0, 0.0, 0.0),
+                (0.0, 30.0, 0.0),
+                NYE
+            )
+
+            # 3) 文字周围“金白拱光”托底（不遮字）
+            for i in range(int(80 * intensity) + 70):
+                th = 2.0 * math.pi * (i / (int(80 * intensity) + 71))
+                px = math.cos(th) * 46.0
+                pz = math.sin(th) * 22.0
+                py = 8.0 + (rnd() * 2.0 - 1.0) * 2.0
+                vx = math.cos(th) * (18.0 + 10.0 * rnd())
+                vz = math.sin(th) * (14.0 + 10.0 * rnd())
+                vy = 36.0 + 10.0 * rnd()
+                fire((px, py, pz), (vx, vy, vz), T.nothing, GOLD if i % 5 == 0 else PEARL)
+                if i % 20 == 0:
+                    time.sleep(0.003)
+
+            time.sleep(1.2)
+
+            # 4) 插入 This_year（按你指定格式）
+            self.firework_generator.generate_firework_thread(
+                (0.0, 0.0, 0.0),
+                (0.0, 30.0, 0.0),
+                This_year
+            )
+
+            # 5) 立刻接一次高空王冠（把文字段变成“高潮中的高潮”）
+            crown_ring(78.0)
+
+        # =========================
+        # 主循环：全程一直高潮（不同层并行 + 周期性大事件）
+        # =========================
+        text_done = False
+        beat = 0
+
+        while True:
+            now = time.time()
+            t = now - start
+            if t >= SHOW_SECONDS:
+                break
+
+            phase = t / SHOW_SECONDS  # 0..1
+
+            # 永远有：两侧旁白 + 中空拱脉冲 + 高空壳层（连续高潮的核心）
+            emit_side_barrage(phase, beat)
+            emit_mid_arches(phase, beat)
+            emit_high_shell(phase, beat)
+
+            # 周期性“大事件”，让每 6~10 秒必然出现“震撼级变化”
+            #（节奏固定，不受 intensity 影响）
+            if beat % 34 == 0:
+                shockwave_shell(center_y=30.0, warm=False)
+            if beat % 47 == 0:
+                triple_jet()
+            if beat % 55 == 0:
+                crown_ring(74.0)
+
+            # 中间插入 NYE + This_year：放在 55s~75s 的中段
+            if (not text_done) and (t >= 60.0):
+                insert_text_block()
+                text_done = True
+
+            # 末段更“疯狂”：最后 20 秒提高事件频率（但仍是固定速度/节奏）
+            if t >= 100.0:
+                if beat % 18 == 0:
+                    shockwave_shell(center_y=36.0, warm=True)
+                if beat % 21 == 0:
+                    crown_ring(82.0)
+
+            time.sleep(tick)
+            beat += 1
+
+        # 结束再补一个“最终超新星壳 + 金白喷流”做收口（依旧全是高潮）
+        shockwave_shell(center_y=40.0, warm=True)
+        triple_jet()
+        crown_ring(86.0)
+        time.sleep(0.25)
+
+    def climax_2min_rose_eternal_romance(self, intensity=1.0, text_list=None, text_start=60.0, text_gap=20.0, cycle_text=True):
+        T = self.type_firework
+
+        # intensity 只影响数量；为了更省粒子，这里用 DENSITY 再整体压一档
+        if intensity <= 0:
+            intensity = 0.1
+
+
+        # 如果你想强制更省（你之前写 intensity=0.1），可以打开下一行
+        intensity = 0.2
+        text_start=5
+        text_gap=5
+        cycle_text=False
+
+        DENSITY = 0.12
+        eff = intensity * DENSITY
+
+        # NYE = generate_func_type(self.type_firework.happy_birthday, self.type_firework.new_year)
+        # This_year = generate_func_type(self.type_firework.happy_birthday, self.type_firework.this_year)
+
+        # 如果外部没传文字列表，就用默认两句
+        
+        text_list = [
+            generate_func_type(self.type_firework.text_display, arr)
+            for arr in self.type_firework.text_arrays
+        ]+[self.type_firework.love_3D,self.type_firework.love_2D]
+
+        # 玫瑰整体缩放（更小）
+        SCALE = 0.70
+
+        def fire(pos, vel, ftype, color=(-1, -1, -1)):
+            self.firework_generator.generate_firework_thread(
+                (float(pos[0]), float(pos[1]), float(pos[2])),
+                (float(vel[0]), float(vel[1]), float(vel[2])),
+                ftype,
+                color=color
+            )
+
+        # ========= 固定色彩（浪漫玫瑰） =========
+        STEM_G = (70, 180, 90)
+        LEAF_G = (60, 210, 120)
+        PETAL1 = (255, 70, 120)    # 外瓣红
+        PETAL2 = (255, 120, 190)   # 内瓣粉
+        PEARL  = (255, 245, 230)
+        GOLD   = (255, 220, 120)
+        ROSE   = (255, 120, 200)
+        VIO    = (190, 90, 255)
+
+        # ========= 数量（已经很省） =========
+        STEM_PTS   = int(8 * eff) + 10
+        LEAF_PTS   = int(7 * eff) + 7
+        PETAL_S    = int(7 * eff) + 4
+        HEART_PTS  = int(12 * eff) + 6
+        COMET_PTS  = int(5 * eff) + 3
+        PULSE_COUNT = int(18 * eff) + 9
+
+        # ========= 陪衬数量（逐段升级，但仍受 eff 约束） =========
+        FIRE_FLY   = int(10 * eff) + 2   # 萤火点
+        BRIDGE_PTS = int(12 * eff) + 2    # 星带拱
+        SHOWER_PTS = int(14 * eff) + 3    # 金粉花雨
+        FAN_PTS    = int(12 * eff) + 2      # 瓣形扇扫
+
+        # ========= 时间参数（固定 2 分钟） =========
+        SHOW_SECONDS = 120.0
+        tick = 0.22
+        start = time.time()
+        beat = 0
+
+        def rot_y(x, y, z, ang):
+            c = math.cos(ang); s = math.sin(ang)
+            return (c*x + s*z, y, -s*x + c*z)
+
+        def rot_x(x, y, z, ang):
+            c = math.cos(ang); s = math.sin(ang)
+            return (x, c*y - s*z, s*y + c*z)
+
+        def clamp_vy(v):
+            if v <= 0.0:
+                return 12.0
+            return v
+
+        # ========= 玫瑰参数（缩放后） =========
+        base = (0.0, 0.0, 0.0)
+        stem_h  = 40.0 * SCALE
+        bloom_y = 48.0 * SCALE
+
+        petals_outer = 6
+        petals_inner = 5
+
+        L_outer = 28.0 * SCALE
+        W_outer = 14.0 * SCALE
+        H_outer = 16.0 * SCALE
+
+        L_inner = 18.0 * SCALE
+        W_inner = 9.0  * SCALE
+        H_inner = 12.0 * SCALE
+
+        # ========= 摇摆（确定性） =========
+        def rose_sway_angles(t):
+            t *= 4.0
+            a = 0.10 * math.sin(2.0 * math.pi * (t / 10.0))
+            b = 0.08 * math.sin(2.0 * math.pi * (t / 13.0) + 1.1)
+            return a, b
+
+        # ========= 枝干 =========
+        def draw_stem(t):
+            ax, ay = rose_sway_angles(t)
+            for i in range(STEM_PTS):
+                u = i / (STEM_PTS - 1) if STEM_PTS > 1 else 0.5
+                y = stem_h * u
+
+                x = (2.8 * (u*u) - 1.0) * SCALE
+                z = (1.4 * math.sin(u * math.pi)) * SCALE
+
+                x, y2, z = rot_x(x, y, z, ax)
+                x, y2, z = rot_y(x, y2, z, ay)
+
+                vx = (2.4 + 0.8 * math.cos(u * math.pi)) * SCALE
+                vz = (0.6 * math.sin(u * math.pi)) * SCALE
+                vy = clamp_vy(10.0 + 10.0 * u)
+
+                fire((base[0] + x, base[1] + y2, base[2] + z), (vx, vy, vz), T.nothing, STEM_G)
+
+        # ========= 叶片 =========
+        def draw_leaf(t, side=1.0, y0=22.0):
+            ax, ay = rose_sway_angles(t)
+
+            L = 18.0 * SCALE
+            W = 10.0 * SCALE
+
+            for i in range(LEAF_PTS):
+                u = i / (LEAF_PTS - 1) if LEAF_PTS > 1 else 0.5
+
+                x = side * (2.0 * SCALE + L * u)
+                z = (4.0 * math.sin(u * math.pi) * side) * SCALE
+                y = (y0 * SCALE) + (2.0 * math.sin(u * math.pi)) * SCALE
+
+                w = W * math.sin(u * math.pi) * (0.85 - 0.25*u)
+
+                for sgn in (-1.0, 1.0):
+                    px, py, pz = x, y, z + sgn * w
+                    px, py, pz = rot_x(px, py, pz, ax)
+                    px, py, pz = rot_y(px, py, pz, ay)
+
+                    vx = (side * (18.0 - 6.0*u) * SCALE)
+                    vz = (sgn  * (12.0 - 5.0*u) * SCALE)
+                    vy = clamp_vy(15.0 + 8.0*u)
+
+                    fire((px, py, pz), (vx, vy, vz), T.nothing, LEAF_G)
+
+                # 中脉线
+                px, py, pz = x, y, z
+                px, py, pz = rot_x(px, py, pz, ax)
+                px, py, pz = rot_y(px, py, pz, ay)
+                fire((px, py, pz), (side * (14.0 - 4.0*u) * SCALE, clamp_vy(32.0 + 6.0*u), 0.0), T.nothing, STEM_G)
+
+        # ========= 花瓣层 =========
+        def draw_petal_layer(t, n_petals, L, W, H, color_main, phase_offset):
+            ax, ay = rose_sway_angles(t)
+            cx, cy0, cz = 0.0, bloom_y, 0.0
+            nod = 0.06 * math.sin(2.0 * math.pi * (t / 7.0) + 0.8)
+
+            for p in range(n_petals):
+                theta = (2.0 * math.pi) * (p / n_petals) + phase_offset
+                dx = math.cos(theta)
+                dz = math.sin(theta)
+                px_perp = -dz
+                pz_perp = dx
+
+                for si in range(PETAL_S):
+                    s = si / (PETAL_S - 1) if PETAL_S > 1 else 0.5
+
+                    width_s = W * (math.sin(math.pi * s)) * (0.95 - 0.25*s)
+                    lift = H * (s ** 1.35)
+
+                    bx = cx + dx * (L * s)
+                    bz = cz + dz * (L * s)
+                    by = cy0 + lift
+
+                    flip = (s ** 2.0) * (6.0 * SCALE + 4.0 * SCALE * math.sin(2.0 * math.pi * (t / 9.0)))
+                    bx2 = bx + dx * flip
+                    bz2 = bz + dz * flip
+
+                    for sgn in (-1.0, 1.0):
+                        px = bx2 + px_perp * (sgn * width_s)
+                        py = by
+                        pz = bz2 + pz_perp * (sgn * width_s)
+
+                        px, py, pz = rot_x(px, py, pz, nod)
+                        px, py, pz = rot_x(px, py, pz, ax)
+                        px, py, pz = rot_y(px, py, pz, ay)
+
+                        vx = (dx * (12.0 + 10.0 * s) +
+                            px_perp * (sgn * (8.0 - 4.0*s)) * (0.6 + 0.4*math.sin(theta))) * SCALE
+                        vz = (dz * (16.0 + 12.0 * s) +
+                            pz_perp * (sgn * (10.0 - 5.0*s)) * (0.6 + 0.4*math.cos(theta))) * SCALE
+                        vy = clamp_vy(18.0 + 18.0 * s)
+
+                        col = PEARL if (si % 5 == 0 and s > 0.62) else color_main
+                        fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                    if si % 2 == 0:
+                        px, py, pz = bx2, by, bz2
+                        px, py, pz = rot_x(px, py, pz, nod)
+                        px, py, pz = rot_x(px, py, pz, ax)
+                        px, py, pz = rot_y(px, py, pz, ay)
+
+                        vx = dx * (16.0 + 8.0 * s) * SCALE
+                        vz = dz * (18.0 + 10.0 * s) * SCALE
+                        vy = clamp_vy(16.0 + 16.0 * s)
+
+                        col = GOLD if (si % 6 == 0 and s > 0.48) else color_main
+                        fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                tipx = cx + math.cos(theta) * (L * 1.02)
+                tipz = cz + math.sin(theta) * (L * 1.02)
+                tipy = cy0 + H * 1.05
+
+                tipx, tipy, tipz = rot_x(tipx, tipy, tipz, nod)
+                tipx, tipy, tipz = rot_x(tipx, tipy, tipz, ax)
+                tipx, tipy, tipz = rot_y(tipx, tipy, tipz, ay)
+
+                fire((tipx, tipy, tipz),
+                    (math.cos(theta) * 10.0 * SCALE, clamp_vy(22.0), math.sin(theta) * 12.0 * SCALE),
+                    T.circle, PEARL)
+
+        # ========= 心形丝带 =========
+        def draw_heart_ribbon(t):
+            spin = 2.0 * math.pi * (t / 18.0)
+            base_y = (26.0 + 6.0 * math.sin(2.0 * math.pi * (t / 9.0))) * SCALE
+
+            for i in range(HEART_PTS):
+                u = (2.0 * math.pi) * (i / HEART_PTS)
+
+                x = 16.0 * (math.sin(u) ** 3)
+                y = 13.0 * math.cos(u) - 5.0 * math.cos(2*u) - 2.0 * math.cos(3*u) - math.cos(4*u)
+
+                px = x * SCALE
+                py = base_y + y * 0.9 * SCALE
+                pz = 0.0
+
+                px, py, pz = rot_y(px, py, pz, spin)
+                px *= (1.1 * SCALE)
+                pz *= (1.1 * SCALE)
+
+                dx = 48.0 * (math.sin(u) ** 2) * math.cos(u)
+                dy = -13.0 * math.sin(u) + 10.0 * math.sin(2*u) + 6.0 * math.sin(3*u) + 4.0 * math.sin(4*u)
+
+                vx = 0.18 * dx * SCALE
+                vz = 0.22 * dx * SCALE
+                vy = clamp_vy(32.0 + 0.12 * abs(dy))
+
+                col = ROSE if (i % 3 != 0) else PEARL
+                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                if i % (HEART_PTS // 6 if HEART_PTS >= 6 else 3) == 0:
+                    fire((px, py, pz), (vx * 0.25, clamp_vy(vy + 18.0), vz * 0.25), T.circle, PEARL)
+
+        # ========= 心跳脉冲 =========
+        def heartbeat_glow(beat_idx):
+            period = 36
+            k = beat_idx % period
+            if k != 0 and k != 5:
+                return
+
+            rr = (26.0 if k == 0 else 34.0) * SCALE
+            y0 = 44.0 * SCALE
+            count = PULSE_COUNT
+
+            for i in range(count):
+                th = 2.0 * math.pi * (i / count)
+                px = math.cos(th) * 2.0
+                pz = math.sin(th) * 2.0
+                py = y0
+
+                vx = math.cos(th) * rr
+                vz = math.sin(th) * (rr * 0.75)
+                vy = clamp_vy(44.0)
+
+                col = GOLD if (i % 5 == 0) else PEARL
+                ftype = T.planet_ball if i % 23 == 0 else T.nothing
+                fire((px, py, pz), (vx, vy, vz), ftype, col)
+
+        # ========= 双人彗星 =========
+        def twin_comets(beat_idx):
+            if beat_idx % 55 != 0:
+                return
+
+            y0 = 20.0 * SCALE
+            X0 = 52.0 * SCALE
+            for i in range(COMET_PTS):
+                u = i / (COMET_PTS - 1) if COMET_PTS > 1 else 0.5
+                z = (-18.0 + 36.0 * u) * SCALE
+                py = y0 + 18.0 * u * SCALE
+
+                vxL = 28.0 * SCALE
+                vxR = -28.0 * SCALE
+                vz  = -2.0 * (z * 0.08)
+                vy  = clamp_vy(46.0 - 6.0 * u)
+
+                fire((-X0, py, z), (vxL, vy, vz), T.nothing, ROSE)
+                fire(( X0, py, z), (vxR, vy, vz), T.nothing, PEARL)
+
+                if i % 8 == 0:
+                    fire((-X0, py, z), (vxL * 0.25, clamp_vy(vy + 18.0), vz * 0.25), T.circle, GOLD)
+
+        # ===================== 陪衬（越来越绚丽，确定性） =====================
+        def stage_of_show(t):
+            u = t / SHOW_SECONDS
+            if u < 0.34:
+                return 1
+            if u < 0.67:
+                return 2
+            return 3
+
+        # 1) 萤火环：永远围绕玫瑰，但随阶段更亮、更密
+        def companion_fireflies(t, beat_idx, stage):
+            # 环绕半径随阶段增大一点点，避免挤在一起
+            R = (18.0 + 6.0 * stage) * SCALE
+            Y = (34.0 + 4.0 * stage) * SCALE
+            k = FIRE_FLY + 2 * stage
+
+            # 角速度随阶段更快一点，更“绚丽”
+            ang0 = 0.18 * beat_idx + 0.7 * stage
+
+            for i in range(k):
+                th = 2.0 * math.pi * (i / k) + ang0
+                px = math.cos(th) * R
+                pz = math.sin(th) * (R * 0.78)
+                py = Y + (6.0 * SCALE) * math.sin(2.0 * th)
+
+                # 斜向飘：沿切向 + 上升
+                tx = -math.sin(th)
+                tz =  math.cos(th)
+                vx = tx * (10.0 * SCALE)
+                vz = tz * (12.0 * SCALE)
+                vy = clamp_vy(22.0 + 6.0 * stage)
+
+                if stage == 1:
+                    col = PEARL if (i % 3 != 0) else ROSE
+                elif stage == 2:
+                    col = ROSE if (i % 4 != 0) else VIO
+                else:
+                    col = GOLD if (i % 5 == 0) else PEARL
+
+                fire((px, py, pz), (vx, vy, vz), T.circle, col)
+
+        # 2) 星带拱桥：中段开始出现，末段更明显（像浪漫的“光拱”）
+        def companion_star_bridges(t, beat_idx, stage):
+            if stage < 2:
+                return
+
+            # 每隔固定拍触发一次（末段更频繁）
+            period = 18 if stage == 2 else 12
+            if beat_idx % period != 0:
+                return
+
+            # 两条拱：前后对称
+            z_front = 18.0 * SCALE
+            z_back  = -18.0 * SCALE
+
+            # 拱宽度与高度随阶段增强
+            R = (46.0 + 10.0 * stage) * SCALE
+            H = (18.0 + 8.0 * stage) * SCALE
+            n = BRIDGE_PTS + 2 * stage
+
+            for i in range(n):
+                u = i / (n - 1) if n > 1 else 0.5
+                ang = math.pi * u
+
+                x = math.cos(ang) * R
+                y = (bloom_y + 6.0 * SCALE) + math.sin(ang) * H
+
+                # 让拱桥慢慢“摆动”一下（确定性）
+                sway = 0.14 * math.sin(2.0 * math.pi * (t / 9.0))
+                x2, y2, z2 = rot_y(x, y, z_front, sway)
+
+                # 速度：向外斜飞 + 上抬（形成拱的“流光”）
+                vx = (8.0 + 10.0 * math.sin(ang)) * SCALE * (1.0 if x2 >= 0 else -1.0)
+                vz = (10.0 * SCALE) * (1.0 if stage == 3 else 0.7)
+                vy = clamp_vy(26.0 + 8.0 * stage)
+
+                col = PEARL if (i % 3 != 0) else (ROSE if stage == 2 else GOLD)
+                fire((x2, y2, z2), (vx, vy, vz), T.nothing, col)
+
+                # 后拱镜像
+                x3, y3, z3 = rot_y(x, y, z_back, -sway)
+                vz2 = -vz
+                fire((x3, y3, z3), (vx, vy, vz2), T.nothing, col)
+
+                # 固定节奏点睛
+                if i % 5 == 0 and stage == 3:
+                    fire((x2, y2, z2), (0.0, clamp_vy(vy + 18.0), 0.0), T.circle, GOLD)
+
+        # 3) 金粉花雨 + 瓣形扇扫：末段逐渐拉满（但粒子仍不大）
+        def companion_golden_shower(t, beat_idx, stage):
+            if stage < 3:
+                return
+
+            # 末段持续，但用节拍控制“越来越绚丽”
+            # 前半末段：period=10；最后 25 秒：period=6
+            if t < 95.0:
+                period = 10
+            else:
+                period = 6
+
+            if beat_idx % period != 0:
+                return
+
+            # 花雨：从上方落下式的斜向光轨（这里用上升速度模拟“撒满天空”的感觉）
+            n = SHOWER_PTS
+            top_y = (78.0 * SCALE)
+
+            for i in range(n):
+                u = i / (n - 1) if n > 1 else 0.5
+                # 横向分布是规则网格（无随机）
+                px = (-38.0 * SCALE) + (76.0 * SCALE) * u
+                pz = (22.0 * SCALE) * math.sin(2.0 * math.pi * u)
+
+                py = top_y + (6.0 * SCALE) * math.sin(2.0 * math.pi * (u + t / 7.0))
+
+                # 速度：斜向扫落（但 vy 必须 >0，所以用“向上+横扫”制造花雨幕）
+                vx = (12.0 * SCALE) * math.cos(2.0 * math.pi * u)
+                vz = (16.0 * SCALE) * math.sin(2.0 * math.pi * u)
+                vy = clamp_vy(28.0 + 6.0 * math.sin(2.0 * math.pi * u))
+
+                col = GOLD if i % 4 == 0 else PEARL
+                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+            # 瓣形扇扫：在花朵周围做 6 扇“瓣光”扫出去（超级浪漫、很像花开）
+            m = FAN_PTS
+            fans = 6
+            base_y = bloom_y + 8.0 * SCALE
+            sweep = 0.28 * math.sin(2.0 * math.pi * (t / 6.0))
+
+            for f in range(fans):
+                theta0 = (2.0 * math.pi) * (f / fans) + sweep
+                dx = math.cos(theta0)
+                dz = math.sin(theta0)
+                px_perp = -dz
+                pz_perp = dx
+
+                for i in range(m):
+                    s = i / (m - 1) if m > 1 else 0.5
+                    rr = (18.0 + 38.0 * s) * SCALE
+                    ww = (10.0 * math.sin(math.pi * s)) * SCALE
+
+                    px = dx * rr + px_perp * ww
+                    pz = dz * rr + pz_perp * ww
+                    py = base_y + (10.0 * (s ** 1.2)) * SCALE
+
+                    vx = dx * (22.0 + 14.0 * s) * SCALE
+                    vz = dz * (24.0 + 16.0 * s) * SCALE
+                    vy = clamp_vy(26.0 + 16.0 * s)
+
+                    col = ROSE if (i % 3 != 0) else PEARL
+                    fire((px, py, pz), (vx, vy, vz), T.nothing, col)
+
+                    if i % 6 == 0:
+                        fire((px, py, pz), (vx * 0.25, clamp_vy(vy + 18.0), vz * 0.25), T.circle, GOLD)
+
+        # ===================== 通用文字插入：队列式 =====================
+        text_idx = 0
+        next_text_time = float(text_start)
+
+        def text_spotlight(t):
+            # 文字出现时的“柔光托底”，不打断玫瑰
+            # 两侧护航 + 一圈柔光环
+            side_x = 58.0 * SCALE
+            y0 = 6.0 * SCALE
+            z_span = 22.0 * SCALE
+            n = int(16 * eff) + 16
+
+            for i in range(n):
+                u = i / (n - 1) if n > 1 else 0.5
+                z = (-z_span) + (2.0 * z_span) * u
+
+                fire((-side_x, y0, z), (0.0, clamp_vy(46.0), 0.0), T.nothing, PEARL)
+                fire(( side_x, y0, z), (0.0, clamp_vy(46.0), 0.0), T.nothing, PEARL)
+
+            # 中心柔光环
+            ring_n = int(18 * eff) + 18
+            R = 36.0 * SCALE
+            py = 18.0 * SCALE
+            for i in range(ring_n):
+                th = 2.0 * math.pi * (i / ring_n)
+                px = math.cos(th) * 2.0
+                pz = math.sin(th) * 2.0
+                vx = math.cos(th) * (R * 0.65)
+                vz = math.sin(th) * (R * 0.50)
+                fire((px, py, pz), (vx, clamp_vy(34.0), vz), T.nothing, GOLD if i % 5 == 0 else PEARL)
+
+        # ========================= 主循环：2 分钟 =========================
+        while True:
+            t = time.time() - start
+            if t >= SHOW_SECONDS:
+                break
+
+            # 玫瑰永驻：每帧重绘
+            draw_stem(t)
+            draw_leaf(t, side=1.0,  y0=22.0)
+            draw_leaf(t, side=-1.0, y0=28.0)
+
+            draw_petal_layer(t, petals_outer, L_outer, W_outer, H_outer, PETAL1, phase_offset=0.0)
+            draw_petal_layer(t, petals_inner, L_inner, W_inner, H_inner, PETAL2, phase_offset=math.pi / petals_inner)
+
+            # 基础浪漫元素（持续但不吵）
+            draw_heart_ribbon(t)
+            heartbeat_glow(beat)
+            twin_comets(beat)
+
+            # 陪衬升级（越来越绚丽）
+            st = stage_of_show(t)
+            companion_fireflies(t, beat, st)
+            companion_star_bridges(t, beat, st)
+            companion_golden_shower(t, beat, st)
+
+            # 通用文字队列插入（你可以给很长的 text_list，甚至循环）
+            if text_list and t >= next_text_time:
+                # 先托底聚光，再放字
+                text_spotlight(t)
+
+                ftype = text_list[text_idx]
+                self.firework_generator.generate_firework_thread(
+                    (0.0, 0.0, 0.0),
+                    (0.0, 30.0, 0.0),
+                    ftype
+                )
+
+                text_idx += 1
+                if text_idx >= len(text_list):
+                    if cycle_text:
+                        text_idx = 0
+                    else:
+                        text_list = []  # 不再插入
+
+                next_text_time += float(text_gap)
+
+            time.sleep(tick)
+            beat += 1
+
+        # 收束：两次温柔心跳（浪漫结束）
+        for _ in range(2):
+            heartbeat_glow(0)
+            time.sleep(0.16)
+
+        
     def double_random(self):
         type_1=self.type_firework.choose_random_type()
         self.firework_generator.generate_firework_thread(self.firework_generator.get_random_position(),
@@ -5946,6 +14676,30 @@ class Auto_fire:
         time.sleep(0.4)
         music.play()
         time.sleep(5)
+
+    def extrimely_big_fire_3(self):
+        """超级壮观的8尺玉烟花"""
+        self.firework_generator.generate_firework_thread((0,0,0),(0,60,0),self.type_firework.extrimely_big_fire_3)
+        time.sleep(6)
+        # 多次播放爆裂声模拟连续爆炸
+        music=self.firework_generator.getMusic(self.firework_generator.crackle_sounds)
+        music.set_volume(1.0)
+        music.play()
+        time.sleep(0.3)
+        music.play()
+        time.sleep(0.3)
+        music.play()
+        time.sleep(6)
+
+    def extrimely_big_fire_4(self):
+        """「千重菊」- 优雅的日式冠菊烟花"""
+        self.firework_generator.generate_firework_thread((0,0,0),(0,55,0),self.type_firework.extrimely_big_fire_4)
+        time.sleep(6.5)
+        # 单次深沉的爆裂声，配合优雅的视觉效果
+        music=self.firework_generator.getMusic(self.firework_generator.crackle_sounds)
+        music.set_volume(0.7)
+        music.play()
+        time.sleep(7)
 
     def nothing_queue(self,color):
         vel_left=np.array([
@@ -6199,7 +14953,7 @@ class Auto_fire:
             self.one_wave_nebula_lattice_overdrive,
         ]
 
-        for i in range(2):
+        for i in range(1):
             random.shuffle(main_list)
             for j in main_list:
                 j()
@@ -6229,7 +14983,7 @@ class Auto_fire:
             self.one_wave_nebula_lattice_overdrive,
             self.one_wave_quantum_crown_overdrive,
         ]
-        for i in range(2):
+        for i in range(1):
             random.shuffle(main_list)
             for i in main_list:
                 i()
@@ -6238,10 +14992,55 @@ class Auto_fire:
                 random.choice(transition)()
                 time.sleep(1)
 
-    def finiah_fire_v2(self):
-        self.climax_30s_continuous()
 
-        self.climax_60s_with_nye_text()
+    def special_firework(self):
+        fire_list=[
+            self.climax_hypernova_symphony,
+            self.climax_tree_shape,
+            self.climax_van_gogh_starry_night,
+            self.climax_aurora_gate_10,
+            self.climax_bloom_superfield_low_flower_love,
+            self.climax_rainbow_waterfall,
+            self.climax_kaleidoscope_rift,
+            self.climax_phoenix_rise,
+            self.climax_rose_window,
+            self.climax_confetti_hurricane,
+            self.climax_fountain_throne,
+            self.climax_cloud_sea_gate,
+            self.climax_prism_burst_corridor,
+            self.climax_hyper_torus_bloom,
+            self.climax_milkyway_bridgefall,
+            self.climax_day_night_flip,
+            self.climax_stargate_array_overload,
+            self.climax_rift_canyon_panorama,
+            self.climax_aurora_cathedral,
+            self.climax_romantic_binary_constellation,
+            self.climax_romantic_moonlit_vows,
+            self.climax_dream_bubble_nebula,
+            self.climax_whirlwind_tornado,
+            self.climax_rotating_world_tree,
+            self.climax_christmas_tree_persistent,
+            self.climax_pillar_forest_uplift,
+            self.climax_hypercube_lattice_collapse,
+            self.climax_dna_helix_ascension,
+            self.climax_lissajous_knot_sculpture,
+            self.climax_mobius_loom,
+            self.climax_mushroom_cloud,
+            self.climax_prism_cathedral_overdrive,
+            self.climax_blackhole_lens_cathedral,
+            self.climax_2min_continuous
+
+        ]
+
+        for i in range(1):
+            random.shuffle(fire_list)
+            for i in fire_list:
+                i()
+                time.sleep(7)
+
+                
+    def finiah_fire_v2(self):
+        self.climax_2min_rose_eternal_romance()
 
         self.one_wave_big8_thick_build()
 
@@ -6249,7 +15048,8 @@ class Auto_fire:
         
 
     def happ_new_year_v2(self):
-        #self.one_wave_show()
+        #self.climax_2min_rose_eternal_romance()
+        
         
         self.starter_v2()
         self.start_narration_fireworks()
@@ -6257,6 +15057,7 @@ class Auto_fire:
         self.main_fire_2_v2()
         
         self.final_fire_v2()
+        self.special_firework()
         self.stop_narration_fireworks()
         self.finiah_fire_v2()
 

@@ -102,6 +102,46 @@ def initinal_update_list(camera, cake,firework):
             arr.append(light)
     return arr
 
+def pick_display_smart(prefer_non_primary=False):
+    """
+    prefer_non_primary=False: 默认选最大面积屏（更“智能”）
+    prefer_non_primary=True : 优先选非主屏，否则再选最大面积
+    """
+    n = pygame.display.get_num_displays()
+    sizes = pygame.display.get_desktop_sizes()  # list[(w,h)]
+
+    if n <= 1:
+        return 0, sizes[0]
+
+    # 计算每块屏的面积
+    areas = [w * h for (w, h) in sizes]
+    biggest = max(range(n), key=lambda i: areas[i])
+
+    if prefer_non_primary:
+        # 优先非0屏；若存在多个非0，挑面积最大的非0
+        non_primary = [i for i in range(n) if i != 0]
+        if non_primary:
+            best_non0 = max(non_primary, key=lambda i: areas[i])
+            return best_non0, sizes[best_non0]
+
+    return biggest, sizes[biggest]
+
+def create_fullscreen_on(display_idx):
+    sizes = pygame.display.get_desktop_sizes()
+    # 越界直接回退主屏
+    if display_idx < 0 or display_idx >= len(sizes):
+        display_idx = 0
+
+    w, h = sizes[display_idx]
+    screen = pygame.display.set_mode((w, h), DOUBLEBUF | OPENGL | FULLSCREEN, display=display_idx)
+
+    # OpenGL 关键：viewport 要同步
+    glViewport(0, 0, w, h)
+
+    # 你的投影矩阵/正交矩阵如果依赖 w,h，也要在这里重算
+    # update_projection(w, h)
+
+    return screen, display_idx, w, h
 
 def main():
     running = [True]
@@ -109,10 +149,12 @@ def main():
     pygame.init()
     pygame.mixer.init()
     # 1400,800
+    #sizes = pygame.display.get_desktop_sizes()
+    display_idx, (width, height) = pick_display_smart(prefer_non_primary=True)
     screen_info = pygame.display.Info()
     #screen_width, screen_height = screen_info.current_w, screen_info.current_h
     width, height = screen_info.current_w, screen_info.current_h
-    pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL | FULLSCREEN)
+    pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL | FULLSCREEN, display=display_idx)
     pygame.display.set_caption("Gift for KaKa❤️")
     pygame.display.set_icon(getIcon())
 
@@ -154,6 +196,11 @@ def main():
                     running[0] = False
                     # for thread in thread_cache:
                     #     thread.stop()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_F12:
+                    n = pygame.display.get_num_displays()
+                    if n > 1:
+                        display_idx = (display_idx + 1) % n
+                        screen, display_idx, w, h = create_fullscreen_on(display_idx)
                 handle_event(event, camera, kaka,firework,running,thread_cache)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
