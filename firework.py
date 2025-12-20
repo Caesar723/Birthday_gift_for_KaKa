@@ -768,29 +768,7 @@ class Firework_types(Object):
 
         self.font_chinese= pygame.font.Font(PATH.format("files/font.ttf"), 50)
 
-        text_segments = [
-            "祝纳纳节日快乐！",
-            "转眼三年过去了。",
-            "你还有半个学期就要毕业了。",
-            "会有不舍，也会有期待。",
-            "希望你在研究生阶段，",
-            "以及更远的未来，",
-            "都能越来越好。",
-            "也希望你能跨过重重困难。",
-            "心态慢慢变好，",
-            "慢慢阳光起来。",
-            "相信自己。",
-            "你是最棒的。",
-            "我会一直在。",
-            "永远爱你。"
-        ]
-
-        self.text_arrays = [
-            pygame.surfarray.array2d(
-                self.font_chinese.render(seg, True, (255, 255, 255), (0, 0, 0))
-            ).T
-            for seg in text_segments
-        ]
+        
 
 
 
@@ -939,74 +917,74 @@ class Firework_types(Object):
         return particle_1+particle_2
     
     def love_3D(self,frame,radius=5):
-        color=(234,130,153)
-        position_org=frame.indexed_position
+        # color=(234,130,153)
+        # position_org=frame.indexed_position
 
-        num=100
-        # Create a range of values for x, y, z
-        x_range = np.linspace(-1.5, 1.5, num)
-        y_range = np.linspace(-1.5, 1.5, num)
-        z_range = np.linspace(-1, 1, num)
-
-
-        # Create a meshgrid for x, y, z
-        x,y,z = np.meshgrid(x_range, y_range, z_range)
-
-        f= (x**2 + (9/4)*y**2 + z**2 - 1)**3 - x**2*z**3 - (9/200)*y**2*z**3
-
-        # Apply the mask to the x, y, and z coordinates
-        x_heart = x[f < 0]*radius
-        y_heart = y[f < 0]*radius
-        z_heart = z[f < 0]*radius
+        # num=100
+        # # Create a range of values for x, y, z
+        # x_range = np.linspace(-1.5, 1.5, num)
+        # y_range = np.linspace(-1.5, 1.5, num)
+        # z_range = np.linspace(-1, 1, num)
 
 
-        particles=[]
-        indices = np.random.choice(len(x_heart), size=300)  # Randomly select 5 points
-        for i in indices:
-            velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x_heart[i],z_heart[i],y_heart[i])),0.3)
+        # # Create a meshgrid for x, y, z
+        # x,y,z = np.meshgrid(x_range, y_range, z_range)
+
+        # f= (x**2 + (9/4)*y**2 + z**2 - 1)**3 - x**2*z**3 - (9/200)*y**2*z**3
+
+        # # Apply the mask to the x, y, and z coordinates
+        # x_heart = x[f < 0]*radius
+        # y_heart = y[f < 0]*radius
+        # z_heart = z[f < 0]*radius
+
+
+        # particles=[]
+        # indices = np.random.choice(len(x_heart), size=300)  # Randomly select 5 points
+        # for i in indices:
+        #     velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x_heart[i],z_heart[i],y_heart[i])),0.3)
             
-            particles.append(frame_break(position_org,velocity,color,False,fire_type=self.nothing,
-                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
-        return particles
+        #     particles.append(frame_break(position_org,velocity,color,False,fire_type=self.nothing,
+        #                                  particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+        return self.ball(frame,radius)
     
-    def love_2D(self,frame,radius=0.6):
-        color=(234,130,153)
-        position_org=frame.indexed_position
-        t = np.linspace(0, 2*np.pi, 1000)
-        # Define the x and y coordinates of the heart
-        x = (16*np.sin(t)**3)*radius
-        y = (13*np.cos(t) - 5*np.cos(2*t) - 2*np.cos(3*t) - np.cos(4*t))*radius
-        particles=[]
-        indices = np.random.choice(len(x), size=150)  # Randomly select 5 points
-        for i in indices:
-            velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x[i],y[i],0)),0.3)
+    def love_2D(self,frame,radius=5):
+        # color=(234,130,153)
+        # position_org=frame.indexed_position
+        # t = np.linspace(0, 2*np.pi, 1000)
+        # # Define the x and y coordinates of the heart
+        # x = (16*np.sin(t)**3)*radius
+        # y = (13*np.cos(t) - 5*np.cos(2*t) - 2*np.cos(3*t) - np.cos(4*t))*radius
+        # particles=[]
+        # indices = np.random.choice(len(x), size=150)  # Randomly select 5 points
+        # for i in indices:
+        #     velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x[i],y[i],0)),0.3)
             
-            particles.append(frame_break(position_org,velocity,color,False,fire_type=self.nothing,
-                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
-        return particles
+        #     particles.append(frame_break(position_org,velocity,color,False,fire_type=self.nothing,
+        #                                  particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+        return self.ball(frame,radius)
     
 
-    def love_2D_odd(self,frame,radius=0.6):
-        color=(234,130,153)
-        position_org=frame.indexed_position
-        t = np.linspace(0, 2*np.pi, 1000)
-        # Define the x and y coordinates of the heart
-        x = (16*np.sin(t)**3)*radius
-        y = (13*np.cos(t) - 5*np.cos(2*t) - 2*np.cos(3*t) - np.cos(4*t))*radius
-        z_odd=-3
-        particles=[]
-        indices = np.random.choice(len(x), size=50)  # Randomly select 5 points
-        for i in indices:
-            velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x[i],y[i],z_odd)),0.3)
+    def love_2D_odd(self,frame,radius=5):
+        # color=(234,130,153)
+        # position_org=frame.indexed_position
+        # t = np.linspace(0, 2*np.pi, 1000)
+        # # Define the x and y coordinates of the heart
+        # x = (16*np.sin(t)**3)*radius
+        # y = (13*np.cos(t) - 5*np.cos(2*t) - 2*np.cos(3*t) - np.cos(4*t))*radius
+        # z_odd=-3
+        # particles=[]
+        # indices = np.random.choice(len(x), size=50)  # Randomly select 5 points
+        # for i in indices:
+        #     velocity=self.get_vel_by_pos(np.zeros((3,1)),to_np_array((x[i],y[i],z_odd)),0.3)
             
-            particles.append(frame_break(position_org,velocity,color,True,fire_type=self.nothing,
-                                         particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
-        return particles
+        #     particles.append(frame_break(position_org,velocity,color,True,fire_type=self.nothing,
+        #                                  particle_arr=self.particle_posiiton_np,effect_arr=self.effect_position_np))
+        return self.ball(frame,radius)
     
     def double_love_2D(self,frame):
-        particle_1=self.love_2D(frame,0.6)
-        particle_2=self.love_2D_odd(frame,0.3)
-        return particle_1+particle_2
+        # particle_1=self.love_2D(frame,0.6)
+        # particle_2=self.love_2D_odd(frame,0.3)
+        return self.ball(frame,5)+self.ball(frame,2)
             
     def half_half_color_ball(self,frame,radius=5,color=0):
         if color==0:
@@ -14022,551 +14000,6 @@ class Auto_fire:
         crown_ring(86.0)
         time.sleep(0.25)
 
-    def climax_2min_rose_eternal_romance(self, intensity=1.0, text_list=None, text_start=60.0, text_gap=20.0, cycle_text=True):
-        T = self.type_firework
-
-        # intensity 只影响数量；为了更省粒子，这里用 DENSITY 再整体压一档
-        if intensity <= 0:
-            intensity = 0.1
-
-
-        # 如果你想强制更省（你之前写 intensity=0.1），可以打开下一行
-        intensity = 0.2
-        text_start=5
-        text_gap=5
-        cycle_text=False
-
-        DENSITY = 0.12
-        eff = intensity * DENSITY
-
-        # NYE = generate_func_type(self.type_firework.happy_birthday, self.type_firework.new_year)
-        # This_year = generate_func_type(self.type_firework.happy_birthday, self.type_firework.this_year)
-
-        # 如果外部没传文字列表，就用默认两句
-        
-        text_list = [
-            generate_func_type(self.type_firework.text_display, arr)
-            for arr in self.type_firework.text_arrays
-        ]+[self.type_firework.love_3D,self.type_firework.love_2D]
-
-        # 玫瑰整体缩放（更小）
-        SCALE = 0.70
-
-        def fire(pos, vel, ftype, color=(-1, -1, -1)):
-            self.firework_generator.generate_firework_thread(
-                (float(pos[0]), float(pos[1]), float(pos[2])),
-                (float(vel[0]), float(vel[1]), float(vel[2])),
-                ftype,
-                color=color
-            )
-
-        # ========= 固定色彩（浪漫玫瑰） =========
-        STEM_G = (70, 180, 90)
-        LEAF_G = (60, 210, 120)
-        PETAL1 = (255, 70, 120)    # 外瓣红
-        PETAL2 = (255, 120, 190)   # 内瓣粉
-        PEARL  = (255, 245, 230)
-        GOLD   = (255, 220, 120)
-        ROSE   = (255, 120, 200)
-        VIO    = (190, 90, 255)
-
-        # ========= 数量（已经很省） =========
-        STEM_PTS   = int(8 * eff) + 10
-        LEAF_PTS   = int(7 * eff) + 7
-        PETAL_S    = int(7 * eff) + 4
-        HEART_PTS  = int(12 * eff) + 6
-        COMET_PTS  = int(5 * eff) + 3
-        PULSE_COUNT = int(18 * eff) + 9
-
-        # ========= 陪衬数量（逐段升级，但仍受 eff 约束） =========
-        FIRE_FLY   = int(10 * eff) + 2   # 萤火点
-        BRIDGE_PTS = int(12 * eff) + 2    # 星带拱
-        SHOWER_PTS = int(14 * eff) + 3    # 金粉花雨
-        FAN_PTS    = int(12 * eff) + 2      # 瓣形扇扫
-
-        # ========= 时间参数（固定 2 分钟） =========
-        SHOW_SECONDS = 120.0
-        tick = 0.22
-        start = time.time()
-        beat = 0
-
-        def rot_y(x, y, z, ang):
-            c = math.cos(ang); s = math.sin(ang)
-            return (c*x + s*z, y, -s*x + c*z)
-
-        def rot_x(x, y, z, ang):
-            c = math.cos(ang); s = math.sin(ang)
-            return (x, c*y - s*z, s*y + c*z)
-
-        def clamp_vy(v):
-            if v <= 0.0:
-                return 12.0
-            return v
-
-        # ========= 玫瑰参数（缩放后） =========
-        base = (0.0, 0.0, 0.0)
-        stem_h  = 40.0 * SCALE
-        bloom_y = 48.0 * SCALE
-
-        petals_outer = 6
-        petals_inner = 5
-
-        L_outer = 28.0 * SCALE
-        W_outer = 14.0 * SCALE
-        H_outer = 16.0 * SCALE
-
-        L_inner = 18.0 * SCALE
-        W_inner = 9.0  * SCALE
-        H_inner = 12.0 * SCALE
-
-        # ========= 摇摆（确定性） =========
-        def rose_sway_angles(t):
-            t *= 4.0
-            a = 0.10 * math.sin(2.0 * math.pi * (t / 10.0))
-            b = 0.08 * math.sin(2.0 * math.pi * (t / 13.0) + 1.1)
-            return a, b
-
-        # ========= 枝干 =========
-        def draw_stem(t):
-            ax, ay = rose_sway_angles(t)
-            for i in range(STEM_PTS):
-                u = i / (STEM_PTS - 1) if STEM_PTS > 1 else 0.5
-                y = stem_h * u
-
-                x = (2.8 * (u*u) - 1.0) * SCALE
-                z = (1.4 * math.sin(u * math.pi)) * SCALE
-
-                x, y2, z = rot_x(x, y, z, ax)
-                x, y2, z = rot_y(x, y2, z, ay)
-
-                vx = (2.4 + 0.8 * math.cos(u * math.pi)) * SCALE
-                vz = (0.6 * math.sin(u * math.pi)) * SCALE
-                vy = clamp_vy(10.0 + 10.0 * u)
-
-                fire((base[0] + x, base[1] + y2, base[2] + z), (vx, vy, vz), T.nothing, STEM_G)
-
-        # ========= 叶片 =========
-        def draw_leaf(t, side=1.0, y0=22.0):
-            ax, ay = rose_sway_angles(t)
-
-            L = 18.0 * SCALE
-            W = 10.0 * SCALE
-
-            for i in range(LEAF_PTS):
-                u = i / (LEAF_PTS - 1) if LEAF_PTS > 1 else 0.5
-
-                x = side * (2.0 * SCALE + L * u)
-                z = (4.0 * math.sin(u * math.pi) * side) * SCALE
-                y = (y0 * SCALE) + (2.0 * math.sin(u * math.pi)) * SCALE
-
-                w = W * math.sin(u * math.pi) * (0.85 - 0.25*u)
-
-                for sgn in (-1.0, 1.0):
-                    px, py, pz = x, y, z + sgn * w
-                    px, py, pz = rot_x(px, py, pz, ax)
-                    px, py, pz = rot_y(px, py, pz, ay)
-
-                    vx = (side * (18.0 - 6.0*u) * SCALE)
-                    vz = (sgn  * (12.0 - 5.0*u) * SCALE)
-                    vy = clamp_vy(15.0 + 8.0*u)
-
-                    fire((px, py, pz), (vx, vy, vz), T.nothing, LEAF_G)
-
-                # 中脉线
-                px, py, pz = x, y, z
-                px, py, pz = rot_x(px, py, pz, ax)
-                px, py, pz = rot_y(px, py, pz, ay)
-                fire((px, py, pz), (side * (14.0 - 4.0*u) * SCALE, clamp_vy(32.0 + 6.0*u), 0.0), T.nothing, STEM_G)
-
-        # ========= 花瓣层 =========
-        def draw_petal_layer(t, n_petals, L, W, H, color_main, phase_offset):
-            ax, ay = rose_sway_angles(t)
-            cx, cy0, cz = 0.0, bloom_y, 0.0
-            nod = 0.06 * math.sin(2.0 * math.pi * (t / 7.0) + 0.8)
-
-            for p in range(n_petals):
-                theta = (2.0 * math.pi) * (p / n_petals) + phase_offset
-                dx = math.cos(theta)
-                dz = math.sin(theta)
-                px_perp = -dz
-                pz_perp = dx
-
-                for si in range(PETAL_S):
-                    s = si / (PETAL_S - 1) if PETAL_S > 1 else 0.5
-
-                    width_s = W * (math.sin(math.pi * s)) * (0.95 - 0.25*s)
-                    lift = H * (s ** 1.35)
-
-                    bx = cx + dx * (L * s)
-                    bz = cz + dz * (L * s)
-                    by = cy0 + lift
-
-                    flip = (s ** 2.0) * (6.0 * SCALE + 4.0 * SCALE * math.sin(2.0 * math.pi * (t / 9.0)))
-                    bx2 = bx + dx * flip
-                    bz2 = bz + dz * flip
-
-                    for sgn in (-1.0, 1.0):
-                        px = bx2 + px_perp * (sgn * width_s)
-                        py = by
-                        pz = bz2 + pz_perp * (sgn * width_s)
-
-                        px, py, pz = rot_x(px, py, pz, nod)
-                        px, py, pz = rot_x(px, py, pz, ax)
-                        px, py, pz = rot_y(px, py, pz, ay)
-
-                        vx = (dx * (12.0 + 10.0 * s) +
-                            px_perp * (sgn * (8.0 - 4.0*s)) * (0.6 + 0.4*math.sin(theta))) * SCALE
-                        vz = (dz * (16.0 + 12.0 * s) +
-                            pz_perp * (sgn * (10.0 - 5.0*s)) * (0.6 + 0.4*math.cos(theta))) * SCALE
-                        vy = clamp_vy(18.0 + 18.0 * s)
-
-                        col = PEARL if (si % 5 == 0 and s > 0.62) else color_main
-                        fire((px, py, pz), (vx, vy, vz), T.nothing, col)
-
-                    if si % 2 == 0:
-                        px, py, pz = bx2, by, bz2
-                        px, py, pz = rot_x(px, py, pz, nod)
-                        px, py, pz = rot_x(px, py, pz, ax)
-                        px, py, pz = rot_y(px, py, pz, ay)
-
-                        vx = dx * (16.0 + 8.0 * s) * SCALE
-                        vz = dz * (18.0 + 10.0 * s) * SCALE
-                        vy = clamp_vy(16.0 + 16.0 * s)
-
-                        col = GOLD if (si % 6 == 0 and s > 0.48) else color_main
-                        fire((px, py, pz), (vx, vy, vz), T.nothing, col)
-
-                tipx = cx + math.cos(theta) * (L * 1.02)
-                tipz = cz + math.sin(theta) * (L * 1.02)
-                tipy = cy0 + H * 1.05
-
-                tipx, tipy, tipz = rot_x(tipx, tipy, tipz, nod)
-                tipx, tipy, tipz = rot_x(tipx, tipy, tipz, ax)
-                tipx, tipy, tipz = rot_y(tipx, tipy, tipz, ay)
-
-                fire((tipx, tipy, tipz),
-                    (math.cos(theta) * 10.0 * SCALE, clamp_vy(22.0), math.sin(theta) * 12.0 * SCALE),
-                    T.circle, PEARL)
-
-        # ========= 心形丝带 =========
-        def draw_heart_ribbon(t):
-            spin = 2.0 * math.pi * (t / 18.0)
-            base_y = (26.0 + 6.0 * math.sin(2.0 * math.pi * (t / 9.0))) * SCALE
-
-            for i in range(HEART_PTS):
-                u = (2.0 * math.pi) * (i / HEART_PTS)
-
-                x = 16.0 * (math.sin(u) ** 3)
-                y = 13.0 * math.cos(u) - 5.0 * math.cos(2*u) - 2.0 * math.cos(3*u) - math.cos(4*u)
-
-                px = x * SCALE
-                py = base_y + y * 0.9 * SCALE
-                pz = 0.0
-
-                px, py, pz = rot_y(px, py, pz, spin)
-                px *= (1.1 * SCALE)
-                pz *= (1.1 * SCALE)
-
-                dx = 48.0 * (math.sin(u) ** 2) * math.cos(u)
-                dy = -13.0 * math.sin(u) + 10.0 * math.sin(2*u) + 6.0 * math.sin(3*u) + 4.0 * math.sin(4*u)
-
-                vx = 0.18 * dx * SCALE
-                vz = 0.22 * dx * SCALE
-                vy = clamp_vy(32.0 + 0.12 * abs(dy))
-
-                col = ROSE if (i % 3 != 0) else PEARL
-                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
-
-                if i % (HEART_PTS // 6 if HEART_PTS >= 6 else 3) == 0:
-                    fire((px, py, pz), (vx * 0.25, clamp_vy(vy + 18.0), vz * 0.25), T.circle, PEARL)
-
-        # ========= 心跳脉冲 =========
-        def heartbeat_glow(beat_idx):
-            period = 36
-            k = beat_idx % period
-            if k != 0 and k != 5:
-                return
-
-            rr = (26.0 if k == 0 else 34.0) * SCALE
-            y0 = 44.0 * SCALE
-            count = PULSE_COUNT
-
-            for i in range(count):
-                th = 2.0 * math.pi * (i / count)
-                px = math.cos(th) * 2.0
-                pz = math.sin(th) * 2.0
-                py = y0
-
-                vx = math.cos(th) * rr
-                vz = math.sin(th) * (rr * 0.75)
-                vy = clamp_vy(44.0)
-
-                col = GOLD if (i % 5 == 0) else PEARL
-                ftype = T.planet_ball if i % 23 == 0 else T.nothing
-                fire((px, py, pz), (vx, vy, vz), ftype, col)
-
-        # ========= 双人彗星 =========
-        def twin_comets(beat_idx):
-            if beat_idx % 55 != 0:
-                return
-
-            y0 = 20.0 * SCALE
-            X0 = 52.0 * SCALE
-            for i in range(COMET_PTS):
-                u = i / (COMET_PTS - 1) if COMET_PTS > 1 else 0.5
-                z = (-18.0 + 36.0 * u) * SCALE
-                py = y0 + 18.0 * u * SCALE
-
-                vxL = 28.0 * SCALE
-                vxR = -28.0 * SCALE
-                vz  = -2.0 * (z * 0.08)
-                vy  = clamp_vy(46.0 - 6.0 * u)
-
-                fire((-X0, py, z), (vxL, vy, vz), T.nothing, ROSE)
-                fire(( X0, py, z), (vxR, vy, vz), T.nothing, PEARL)
-
-                if i % 8 == 0:
-                    fire((-X0, py, z), (vxL * 0.25, clamp_vy(vy + 18.0), vz * 0.25), T.circle, GOLD)
-
-        # ===================== 陪衬（越来越绚丽，确定性） =====================
-        def stage_of_show(t):
-            u = t / SHOW_SECONDS
-            if u < 0.34:
-                return 1
-            if u < 0.67:
-                return 2
-            return 3
-
-        # 1) 萤火环：永远围绕玫瑰，但随阶段更亮、更密
-        def companion_fireflies(t, beat_idx, stage):
-            # 环绕半径随阶段增大一点点，避免挤在一起
-            R = (18.0 + 6.0 * stage) * SCALE
-            Y = (34.0 + 4.0 * stage) * SCALE
-            k = FIRE_FLY + 2 * stage
-
-            # 角速度随阶段更快一点，更“绚丽”
-            ang0 = 0.18 * beat_idx + 0.7 * stage
-
-            for i in range(k):
-                th = 2.0 * math.pi * (i / k) + ang0
-                px = math.cos(th) * R
-                pz = math.sin(th) * (R * 0.78)
-                py = Y + (6.0 * SCALE) * math.sin(2.0 * th)
-
-                # 斜向飘：沿切向 + 上升
-                tx = -math.sin(th)
-                tz =  math.cos(th)
-                vx = tx * (10.0 * SCALE)
-                vz = tz * (12.0 * SCALE)
-                vy = clamp_vy(22.0 + 6.0 * stage)
-
-                if stage == 1:
-                    col = PEARL if (i % 3 != 0) else ROSE
-                elif stage == 2:
-                    col = ROSE if (i % 4 != 0) else VIO
-                else:
-                    col = GOLD if (i % 5 == 0) else PEARL
-
-                fire((px, py, pz), (vx, vy, vz), T.circle, col)
-
-        # 2) 星带拱桥：中段开始出现，末段更明显（像浪漫的“光拱”）
-        def companion_star_bridges(t, beat_idx, stage):
-            if stage < 2:
-                return
-
-            # 每隔固定拍触发一次（末段更频繁）
-            period = 18 if stage == 2 else 12
-            if beat_idx % period != 0:
-                return
-
-            # 两条拱：前后对称
-            z_front = 18.0 * SCALE
-            z_back  = -18.0 * SCALE
-
-            # 拱宽度与高度随阶段增强
-            R = (46.0 + 10.0 * stage) * SCALE
-            H = (18.0 + 8.0 * stage) * SCALE
-            n = BRIDGE_PTS + 2 * stage
-
-            for i in range(n):
-                u = i / (n - 1) if n > 1 else 0.5
-                ang = math.pi * u
-
-                x = math.cos(ang) * R
-                y = (bloom_y + 6.0 * SCALE) + math.sin(ang) * H
-
-                # 让拱桥慢慢“摆动”一下（确定性）
-                sway = 0.14 * math.sin(2.0 * math.pi * (t / 9.0))
-                x2, y2, z2 = rot_y(x, y, z_front, sway)
-
-                # 速度：向外斜飞 + 上抬（形成拱的“流光”）
-                vx = (8.0 + 10.0 * math.sin(ang)) * SCALE * (1.0 if x2 >= 0 else -1.0)
-                vz = (10.0 * SCALE) * (1.0 if stage == 3 else 0.7)
-                vy = clamp_vy(26.0 + 8.0 * stage)
-
-                col = PEARL if (i % 3 != 0) else (ROSE if stage == 2 else GOLD)
-                fire((x2, y2, z2), (vx, vy, vz), T.nothing, col)
-
-                # 后拱镜像
-                x3, y3, z3 = rot_y(x, y, z_back, -sway)
-                vz2 = -vz
-                fire((x3, y3, z3), (vx, vy, vz2), T.nothing, col)
-
-                # 固定节奏点睛
-                if i % 5 == 0 and stage == 3:
-                    fire((x2, y2, z2), (0.0, clamp_vy(vy + 18.0), 0.0), T.circle, GOLD)
-
-        # 3) 金粉花雨 + 瓣形扇扫：末段逐渐拉满（但粒子仍不大）
-        def companion_golden_shower(t, beat_idx, stage):
-            if stage < 3:
-                return
-
-            # 末段持续，但用节拍控制“越来越绚丽”
-            # 前半末段：period=10；最后 25 秒：period=6
-            if t < 95.0:
-                period = 10
-            else:
-                period = 6
-
-            if beat_idx % period != 0:
-                return
-
-            # 花雨：从上方落下式的斜向光轨（这里用上升速度模拟“撒满天空”的感觉）
-            n = SHOWER_PTS
-            top_y = (78.0 * SCALE)
-
-            for i in range(n):
-                u = i / (n - 1) if n > 1 else 0.5
-                # 横向分布是规则网格（无随机）
-                px = (-38.0 * SCALE) + (76.0 * SCALE) * u
-                pz = (22.0 * SCALE) * math.sin(2.0 * math.pi * u)
-
-                py = top_y + (6.0 * SCALE) * math.sin(2.0 * math.pi * (u + t / 7.0))
-
-                # 速度：斜向扫落（但 vy 必须 >0，所以用“向上+横扫”制造花雨幕）
-                vx = (12.0 * SCALE) * math.cos(2.0 * math.pi * u)
-                vz = (16.0 * SCALE) * math.sin(2.0 * math.pi * u)
-                vy = clamp_vy(28.0 + 6.0 * math.sin(2.0 * math.pi * u))
-
-                col = GOLD if i % 4 == 0 else PEARL
-                fire((px, py, pz), (vx, vy, vz), T.nothing, col)
-
-            # 瓣形扇扫：在花朵周围做 6 扇“瓣光”扫出去（超级浪漫、很像花开）
-            m = FAN_PTS
-            fans = 6
-            base_y = bloom_y + 8.0 * SCALE
-            sweep = 0.28 * math.sin(2.0 * math.pi * (t / 6.0))
-
-            for f in range(fans):
-                theta0 = (2.0 * math.pi) * (f / fans) + sweep
-                dx = math.cos(theta0)
-                dz = math.sin(theta0)
-                px_perp = -dz
-                pz_perp = dx
-
-                for i in range(m):
-                    s = i / (m - 1) if m > 1 else 0.5
-                    rr = (18.0 + 38.0 * s) * SCALE
-                    ww = (10.0 * math.sin(math.pi * s)) * SCALE
-
-                    px = dx * rr + px_perp * ww
-                    pz = dz * rr + pz_perp * ww
-                    py = base_y + (10.0 * (s ** 1.2)) * SCALE
-
-                    vx = dx * (22.0 + 14.0 * s) * SCALE
-                    vz = dz * (24.0 + 16.0 * s) * SCALE
-                    vy = clamp_vy(26.0 + 16.0 * s)
-
-                    col = ROSE if (i % 3 != 0) else PEARL
-                    fire((px, py, pz), (vx, vy, vz), T.nothing, col)
-
-                    if i % 6 == 0:
-                        fire((px, py, pz), (vx * 0.25, clamp_vy(vy + 18.0), vz * 0.25), T.circle, GOLD)
-
-        # ===================== 通用文字插入：队列式 =====================
-        text_idx = 0
-        next_text_time = float(text_start)
-
-        def text_spotlight(t):
-            # 文字出现时的“柔光托底”，不打断玫瑰
-            # 两侧护航 + 一圈柔光环
-            side_x = 58.0 * SCALE
-            y0 = 6.0 * SCALE
-            z_span = 22.0 * SCALE
-            n = int(16 * eff) + 16
-
-            for i in range(n):
-                u = i / (n - 1) if n > 1 else 0.5
-                z = (-z_span) + (2.0 * z_span) * u
-
-                fire((-side_x, y0, z), (0.0, clamp_vy(46.0), 0.0), T.nothing, PEARL)
-                fire(( side_x, y0, z), (0.0, clamp_vy(46.0), 0.0), T.nothing, PEARL)
-
-            # 中心柔光环
-            ring_n = int(18 * eff) + 18
-            R = 36.0 * SCALE
-            py = 18.0 * SCALE
-            for i in range(ring_n):
-                th = 2.0 * math.pi * (i / ring_n)
-                px = math.cos(th) * 2.0
-                pz = math.sin(th) * 2.0
-                vx = math.cos(th) * (R * 0.65)
-                vz = math.sin(th) * (R * 0.50)
-                fire((px, py, pz), (vx, clamp_vy(34.0), vz), T.nothing, GOLD if i % 5 == 0 else PEARL)
-
-        # ========================= 主循环：2 分钟 =========================
-        while True:
-            t = time.time() - start
-            if t >= SHOW_SECONDS:
-                break
-
-            # 玫瑰永驻：每帧重绘
-            draw_stem(t)
-            draw_leaf(t, side=1.0,  y0=22.0)
-            draw_leaf(t, side=-1.0, y0=28.0)
-
-            draw_petal_layer(t, petals_outer, L_outer, W_outer, H_outer, PETAL1, phase_offset=0.0)
-            draw_petal_layer(t, petals_inner, L_inner, W_inner, H_inner, PETAL2, phase_offset=math.pi / petals_inner)
-
-            # 基础浪漫元素（持续但不吵）
-            draw_heart_ribbon(t)
-            heartbeat_glow(beat)
-            twin_comets(beat)
-
-            # 陪衬升级（越来越绚丽）
-            st = stage_of_show(t)
-            companion_fireflies(t, beat, st)
-            companion_star_bridges(t, beat, st)
-            companion_golden_shower(t, beat, st)
-
-            # 通用文字队列插入（你可以给很长的 text_list，甚至循环）
-            if text_list and t >= next_text_time:
-                # 先托底聚光，再放字
-                text_spotlight(t)
-
-                ftype = text_list[text_idx]
-                self.firework_generator.generate_firework_thread(
-                    (0.0, 0.0, 0.0),
-                    (0.0, 30.0, 0.0),
-                    ftype
-                )
-
-                text_idx += 1
-                if text_idx >= len(text_list):
-                    if cycle_text:
-                        text_idx = 0
-                    else:
-                        text_list = []  # 不再插入
-
-                next_text_time += float(text_gap)
-
-            time.sleep(tick)
-            beat += 1
-
-        # 收束：两次温柔心跳（浪漫结束）
-        for _ in range(2):
-            heartbeat_glow(0)
-            time.sleep(0.16)
 
         
     def double_random(self):
@@ -15040,7 +14473,7 @@ class Auto_fire:
 
                 
     def finiah_fire_v2(self):
-        self.climax_2min_rose_eternal_romance()
+        self.climax_2min_continuous()
 
         self.one_wave_big8_thick_build()
 

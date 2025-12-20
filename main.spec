@@ -13,7 +13,7 @@ else:
 
 your_path=os.path.abspath(os.getcwd())
 
-folders=["img","music","stl","HAPPY_TIME_IMAGE","files"]
+folders=["img","music","stl","files"]
 
 datas=[]
 
@@ -65,7 +65,7 @@ exe = EXE(
 
 app = BUNDLE(
     exe,
-    name='Gift_for_KaKa❤️.app',
+    name='Firework_XuanpeiChen.app',
     icon='img.icns',
     bundle_identifier=None,
 )

@@ -15,10 +15,8 @@ from Font import Font
 from functions import *
 from light import Sun
 from camera import Camera
-from cake import Cake
-from kaka import KaKa
+
 from firework import Firework_generator
-from schedule import Table
 from favourite_img import Favourite_Img
 
 
@@ -42,65 +40,23 @@ def anniversary_days(anniversary:str):
 
 def getAge():  # return age,whether birthday
     birthday_flag = False
-    birthday = datetime.datetime(2005, 8, 30)
+    birthday = datetime.datetime(1999, 2, 2)
     year_b, month_b, day_b = birthday.year, birthday.month, birthday.day
     today = datetime.datetime.now()
     year_n, month_n, day_n = today.year, today.month, today.day
 
-    if datetime.date(2005,month_n,day_n)==datetime.date(2005,month_b,day_b):
+    if datetime.date(1999,month_n,day_n)==datetime.date(2005,month_b,day_b):
     
     #if month_n <= month_b and day_n == day_b:
         birthday_flag = True
         age = year_n - year_b
-    elif datetime.date(2005,month_n,day_n)>datetime.date(2005,month_b,day_b):
+    elif datetime.date(1999,month_n,day_n)>datetime.date(2005,month_b,day_b):
         age = year_n - year_b
     else:
         age = year_n - year_b - 1
     return (age, birthday_flag)
 
 
-def initinal_imgs():
-    age, birth_flag = getAge()
-    
-    sun = Sun((10.0, 100.0, -80.0, 1), 10)
-    name = Font((0, 0, 0), "name", (1, 1, 1), (98, 0, 98))
-    
-    if birth_flag:
-        happy = Font((0, 17, 0), "H", (1, 1, 1), (153, 130, 108))
-        birthday = Font((0, 10, 0), "B", (1, 1, 1), (153, 130, 108))
-        arr = [happy, birthday, sun, name]
-
-    else:
-        love = Font(
-            (10, 0, 0), "love", (4, 4, 4), (255, 10, 10), (0.9, 0.1, 0.1), (0, 0, 0)
-        )
-        texts=anniversary_days(str(getAnniversary()))
-        #table=Table((-25,0,-7),40)
-        #img=Favourite_Img((19,0,-7),320)
-        #arr = [sun, name, love,img]+texts
-        arr = [sun, name, love]+texts
-    str_age = str(age)
-    for i in range(len(str_age)):
-        arr.append(
-            Font(
-                (1.6 - i * 3, -11.3, 0),
-                str_age[i],
-                (0.7, 0.7, 0.7),
-                (98, 30, 30),
-                (0.9, 0.1, 0.1),
-            )
-        )
-    cake = Cake((0, -10, 0), age)
-    arr.append(cake)
-    return arr, cake
-
-
-def initinal_update_list(camera, cake,firework):
-    arr = [camera,firework]
-    for candle in cake.candles:
-        for light in candle.lights:
-            arr.append(light)
-    return arr
 
 def pick_display_smart(prefer_non_primary=False):
     """
@@ -155,24 +111,25 @@ def main():
     #screen_width, screen_height = screen_info.current_w, screen_info.current_h
     width, height = screen_info.current_w, screen_info.current_h
     pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL | FULLSCREEN, display=display_idx)
-    pygame.display.set_caption("Gift for KaKa❤️")
+    pygame.display.set_caption("Firework")
     pygame.display.set_icon(getIcon())
 
     age,birth_flag=getAge()
-    img_list, cake = initinal_imgs()
+    img_list=[]
 
     initinal_cam_pos = np.array([0, 0, -50])
     camera = Camera(initinal_cam_pos)
     firework=Firework_generator(running,age,birth_flag)
-    kaka = KaKa(10, 15, (0, -10, 20), cake,firework)
-    
+    # cloud=Cloud()
+    # img_list.append(cloud)
 
     
-    img_list.append(kaka)
+    
     img_list.append(firework)
 
+
     
-    update_list = initinal_update_list(camera, cake,firework)
+    update_list =[camera,firework]# initinal_update_list(camera, cake,firework)
 
     setDraw(width, height)
     setLight()
@@ -201,7 +158,7 @@ def main():
                     if n > 1:
                         display_idx = (display_idx + 1) % n
                         screen, display_idx, w, h = create_fullscreen_on(display_idx)
-                handle_event(event, camera, kaka,firework,running,thread_cache)
+                handle_event(event, camera,firework,running,thread_cache)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glLoadIdentity()

@@ -53,7 +53,7 @@ def load_stl(name,to_vertices=0):
     else:
         return data
     
-def handle_event(event,camera,kaka,firework,running,thread_cache):
+def handle_event(event,camera,firework,running,thread_cache):
     
     if event.type == pygame.MOUSEMOTION and camera.eye_flag:
         dx, dy = event.rel
@@ -73,17 +73,13 @@ def handle_event(event,camera,kaka,firework,running,thread_cache):
             camera.move_flag=event.key
         elif event.key in camera.fly_flag_dict:
             camera.fly_flag=camera.fly_flag_dict[event.key]
-        elif event.key==pygame.K_k:
-            kaka.display_flag=True
+        
             #firework.start_auto_fire()
         elif event.key==pygame.K_f:
             firework.generate_firework(
                 firework.get_random_position(),
                 firework.get_random_velocity()
                 )
-        elif event.key==pygame.K_n:
-            thread=firework.start_auto_fire_new_year_eve()
-            thread_cache.append(thread)
 
         elif event.key==pygame.K_v:
             thread=firework.start_auto_fire_new_year_eve_v2()
